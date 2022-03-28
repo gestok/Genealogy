@@ -9,6 +9,7 @@ Python Project Γενεαλογικού Δέντρου για το μάθημα 
 - [ ] Standalone Functions
 
 ### GUI Structure (T-Kinter)
+```
 Main Container<br>
   -- Button: "Insert Person"<br>
     -- Form: ID, First, Last, Birth, Description, Family Connections<br>
@@ -23,5 +24,6 @@ Main Container<br>
     -- Open Explorer to select saving folder/file.<br>
   -- Load<br>
     -- Open Explorer to load file.<br>
+```
 
 ### Classes & Functions
