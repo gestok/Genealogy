@@ -3,7 +3,7 @@ Python Project Γενεαλογικού Δέντρου για το μάθημα 
 
 ## To Do List
 - [ ] GUI Structure
-- [ ] GUI Functionality
+- [ ] GUI Linking
 - [ ] Main Classes
 - [ ] Class Functions
 - [ ] Standalone Functions
