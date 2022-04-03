@@ -113,13 +113,21 @@ save_btn = ttk.Button(app, text="Save...", command=on_save)
 def on_load():
     """To be run when the user tries to load progress"""
 
+    global load_path
+
     # Update Status Text
     status_var.set("Loading from...")
-    # Get path of file to Load
-    global load_path
-    load_path = filedialog.askopenfilename(filetypes = (("GeneApp CSV", "*.csv"), ("All files", "*")))
-    # Update Status Text
-    status_var.set("Loaded!")
+
+    # Get path of file to Load in a temporary variable
+    load_path_tmp = filedialog.askopenfilename(filetypes = (("GeneApp CSV", "*.csv"), ("All files", "*")))
+
+    # Check if temporary path is okay and load it or not
+    if load_path_tmp != "":
+        load_path = load_path_tmp
+        status_var.set("Loaded!")
+
+    else:
+        status_var.set("Loading failed...")
 
 # Load Button
 load_btn = ttk.Button(app, text="Load from...", command=on_load)
