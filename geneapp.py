@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
 from datetime import datetime as dt
 from pathlib import Path
-import pandas
+import pandas as pd
 import io
 from classes.buttons import GeneButton
 
@@ -15,6 +15,9 @@ livingMales = []
 deadMales = []
 livingFemales = []
 deadFemales = []
+# Global Dictionary typoy:
+# {"ID" : {"Name" : "Takis", "Last" : "Takitzhs", "Father" : "ID_toy_father", "Mother" : "ID_toy_mother"} } ktl
+# Nomizw einai h kalyterh epilogh gia apothikeysh twn dedomenwn, mias kai ta ID tha einai unique.
 
 
 # Create Root Window
@@ -93,7 +96,7 @@ def on_save():
     try:
         if Path(save_dir).exists() or type(save_dir) == str:
             # Save the Data as CSV
-            data = pandas.read_csv(filepath_or_buffer=load_path, parse_dates=["Birth","Death"], index_col=["ID"])
+            data = pd.read_csv(filepath_or_buffer=load_path, parse_dates=["Birth","Death"], index_col=["ID"])
             data.to_csv(save_dir)
             # Success
             status_var.set("Saved!")
@@ -106,7 +109,7 @@ save_btn = ttk.Button(app, text="Save...", command=on_save)
 
 
 # Load Records from given file (should go to the class of "view graph")
-# data = pandas.read_csv(load_file, parse_dates=["Birth","Death"])
+# data = pd.read_csv(load_file, parse_dates=["Birth","Death"])
 # data.set_index(['ID'])
 
 # Get the path of the file to load
@@ -135,7 +138,10 @@ load_btn = ttk.Button(app, text="Load from...", command=on_load)
 
 # Debugging
 def on_print():
-    print("Load path: " + str(load_path))
+    print("--- --- --- ---")
+    print("Load path: " + str(load_path) + "\n")
+    print(pd.read_csv(load_path))
+    print("\n")
 
 
 # Place Widgets in App Frame
