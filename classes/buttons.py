@@ -1,5 +1,5 @@
 # buttons.py
-""" File that includes the InsertPerson class which creates the button "Insert" and all its functions. """
+""" File that includes the GeneButton class which creates the right button and all its functions. """
 import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
 from numpy import spacing
@@ -8,14 +8,14 @@ from numpy import spacing
 class GeneButton(ttk.Frame):
     """ Button Class. """
 
-    def __init__(self, master, statusbar, functionality, path_to_csv):
+    def __init__(self, master, statusbar, functionality, path_to_buffer):
         """ Master is defined as the root element, statusbar is the main application's status bar. """
 
         ttk.Frame.__init__(self, master)
         self.master = master
         self.statusbar = statusbar
         self.functionality = str(functionality).lower()
-        self.path = path_to_csv
+        self.buffer = path_to_buffer
         self.subwindow = None
 
 
@@ -92,11 +92,10 @@ class GeneButton(ttk.Frame):
 
     def update_status(self):
         """ Updates status messages on main application. """
-        if self.subwindow == None:
-            return
 
         if tk.Toplevel.winfo_exists(self.subwindow):
             self.statusbar.set("Inserting new person...")
+
         else:
             self.statusbar.set("New person inserted!")
 
@@ -106,5 +105,12 @@ class GeneButton(ttk.Frame):
     def on_submit(self):
         """ Triggers when user hits the submit button. """
 
-        print( str(self.ID.get()) +"\n"+ str(self.name.get()) +"\n"+ str(self.birth.get()) +"\n"+ str(self.death.get()) +"\n"+ str(self.sex.get()) +"\n"+ str(self.f_ID.get()) +"\n"+ str(self.m_ID.get()) +"\n"+ str(self.desc.get("1.0","end-1c")) )
-        
+        # Debug
+        # print( str(self.ID.get()) +"\n"+ str(self.name.get()) +"\n"+ str(self.birth.get()) +"\n"+ str(self.death.get()) +"\n"+ str(self.sex.get()) +"\n"+ str(self.f_ID.get()) +"\n"+ str(self.m_ID.get()) +"\n"+ str(self.desc.get("1.0","end-1c")) )
+
+        # ++ If data given is correct
+        # Add data to buffer
+        self.buffer += f"{str(self.ID.get())},{str(self.name.get())},{str(self.birth.get())},{str(self.death.get())},{str(self.sex.get())},{str(self.f_ID.get())},{str(self.m_ID.get())},{self.desc.get('1.0','end-1c')}\n"
+        print (self.buffer)
+        # Destroy the subwindow
+        self.subwindow.destroy()
