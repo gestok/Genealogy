@@ -1,7 +1,7 @@
 # buttons.py
 """ File that includes the GeneButton class which creates the right button and all its functions. """
 import tkinter as tk
-from tkinter import Toplevel, ttk, filedialog
+from tkinter import Toplevel, ttk
 from numpy import spacing
 
 
@@ -114,3 +114,5 @@ class GeneButton(ttk.Frame):
         print (self.buffer)
         # Destroy the subwindow
         self.subwindow.destroy()
+
+        return self.buffer

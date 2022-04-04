@@ -7,7 +7,6 @@ from classes.buttons import GeneButton
 
 
 # Global Variables
-load_path = ""
 livingMales = []
 deadMales = []
 livingFemales = []
@@ -77,9 +76,9 @@ def on_save():
         with open(save_dir, "w", encoding="utf-8") as f:
             f.write(buffer)
         update_status("Saved!")
-
     except:
         update_status("Saving failed!")
+
 # Save Button
 save_btn = ttk.Button(app, text="Save...", command=on_save)
 
@@ -96,7 +95,6 @@ def on_load():
     # Check if temporary path is okay and load it or not
     if load_path != "":
         update_status("File loaded! Checking data structure from file...")
-
         # Open the file for check
         with open(load_path, encoding="utf-8") as f:
             # Pre-check if header is compatible with our data structure
@@ -125,12 +123,13 @@ def on_load():
         update_status("Loading failed...")
     
     return buffer
+
 # Load Button
 load_btn = ttk.Button(app, text="Load from...", command=on_load)
 
 
-# Debugging
 def on_print():
+    """ Prints some info for debugging purposes. """
     print("--- --- --- ---")
     print("Load path: " + str(load_path))
     print("--- --- --- ---")
