@@ -131,8 +131,6 @@ load_btn = ttk.Button(app, text="Load from...", command=on_load)
 def on_print():
     """ Prints some info for debugging purposes. """
     print("--- --- --- ---")
-    print("Load path: " + str(load_path))
-    print("--- --- --- ---")
     print("Buffer: \n" + buffer)
     # print(pd.read_csv(load_path))
 
