@@ -112,6 +112,7 @@ def on_load():
                 return
         
         # If we made it this far, file is probably OK
+        global buffer
         # Clear the buffer (preventing duplicate records)
         buffer = ""
         # Write contents to buffer
@@ -121,8 +122,6 @@ def on_load():
 
     else:
         update_status("Loading failed...")
-    
-    return buffer
 
 # Load Button
 load_btn = ttk.Button(app, text="Load from...", command=on_load)
