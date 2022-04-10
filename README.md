@@ -1,14 +1,15 @@
 # Genealogy Tree
 Python Project Γενεαλογικού Δέντρου για το μάθημα ΠΛΗΠΡΟ: Προγραμματισμός...!!?
+Python Project Γενεαλογικού Δέντρου για το μάθημα ΠΛΗΠΡΟ: Προγραμματισμός...!!edwef
 
-## To Do List
+## To Do List!
 - [ ] GUI Structure
 - [ ] GUI Linking
 - [ ] Main Classes
 - [ ] Class Functions
 - [ ] Standalone Functions
 
-### GUI Structure (T-Kinter)
+### GUI Structure (T-Kinter).
 ```
 Main Container
   -- Button: "Insert Person"
@@ -26,4 +27,4 @@ Main Container
     -- Open Explorer to load file.
 ```
 
-### Classes & Functions
+### Classes & Functions.
