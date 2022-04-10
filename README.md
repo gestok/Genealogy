@@ -1,5 +1,5 @@
 # Genealogy Tree
-Python Project Γενεαλογικού Δέντρου για το μάθημα ΠΛΗΠΡΟ: Προγραμματισμόasdasdς.<br>
+Python Project Γενεαλογικού Δέντρου για το μάθημα ΠΛΗΠΡΟ: Προγραμματισμός.<br>
 ..
 
 ## To Do List!
