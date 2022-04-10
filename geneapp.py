@@ -38,8 +38,14 @@ status = ttk.Label(root,
 )
 
 
+# Debug Insert
+def on_insert(root, status, functionality, buffer_file):
+    GeneButton(root, status, functionality, buffer_file).open()
+    global buffer
+    GeneButton.buffer = buffer
+
 # Insert Person
-insert_btn = ttk.Button(app, text="Insert", command=GeneButton(root, status_var, "insert", buffer).open)
+insert_btn = ttk.Button(app, text="Insert", command=lambda: on_insert(root, status_var, "insert", buffer))
 insert_lbl = ttk.Label(app,
     text="Insert a new person in the Genealogy Tree or edit an existing one.",
     font=("Arial 12"), foreground="#151515", background="#ddd"
