@@ -1,106 +1,47 @@
-#geneapp.py
-"""Main Application File"""
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import Toplevel, ttk, filedialog
 import pandas as pd
-from classes.buttons import GeneButton
+import matplotlib.pyplot as plt
+from io import StringIO
+import networkx as nx
+from networkx.drawing.nx_pydot import graphviz_layout
 
 
 # Global Variables
+root = tk.Tk() # Create Root Window
+subwindow = None # Sub window
 livingMales = []
 deadMales = []
 livingFemales = []
 deadFemales = []
-buffer = ""
-
-# Create Root Window
-root = tk.Tk()
-# Set Root's Window Properties
-root.title("GeneApp - Genealogy Tree Application")
-root.columnconfigure(0, weight=1)
-root.rowconfigure(0, weight=1)
-# Create App Frame
-app = tk.Frame(root)
-
-
-# Heading
-intro = ttk.Label(app,
-    text="GeneApp - Genealogy Tree Application",
-    font=("Arial 16"), foreground="#151515",
-)
-
-
-# Status Bar
-status_var = tk.StringVar()
-status = ttk.Label(root,
-    textvariable=status_var,
-    foreground="#151515", background="#ddd", padding=5
-)
-
-
-# Debug Insert
-def on_insert(root, status, functionality, buffer_file):
-    GeneButton(root, status, functionality, buffer_file).open()
-    global buffer
-    GeneButton.buffer = buffer
-
-# Insert Person
-insert_btn = ttk.Button(app, text="Insert", command=lambda: on_insert(root, status_var, "insert", buffer))
-insert_lbl = ttk.Label(app,
-    text="Insert a new person in the Genealogy Tree or edit an existing one.",
-    font=("Arial 12"), foreground="#151515", background="#ddd"
-)
-
-
-# Delete Person
-delete_btn = ttk.Button(app, text="Delete", command=GeneButton(root, status_var, "delete", buffer).open)
-delete_lbl = ttk.Label(app,
-    text="Delete an existing person from the Genealogy Tree.",
-    font=("Arial 12"), background="#ddd", foreground="#151515"
-)
-
-
-# View Graph Tree
-view_btn = ttk.Button(app, text="View Tree", command=GeneButton(root, status_var, "view", buffer).open)
-view_lbl = ttk.Label(app,
-    text="View a network graph of the current Genealogy Tree.",
-    font=("Arial 12"), background="#ddd", foreground="#151515"
-)
+T = nx.DiGraph()    #δημιουργία κενού δικτύου
+buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
 
 
 def on_save():
-    """ Writes the contents of buffer to an existing or new file specified by the user. """
-
+    """ Γράφει τα δεδομένα του buffer σε ένα υπάρχων ή νέο αρχείο που θα καθορίσει ο χρήστης. """
     # Update Status Text
-    update_status("Saving...")
-
+    update_status("Αποθήκευση...")
     # Grab Path and Filename to save
     save_dir = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=(("GeneApp CSV File", "*.csv"), ("All files", "*")))
-
     # Try to see if save directory is valid to save
     try:
         with open(save_dir, "w", encoding="utf-8") as f:
             f.write(buffer)
-        update_status("Saved!")
+        update_status("Αποθηκεύτηκε!")
     except:
-        update_status("Saving failed!")
-
-# Save Button
-save_btn = ttk.Button(app, text="Save...", command=on_save)
+        update_status("Αποθήκευση απέτυχε!")
 
 
 def on_load():
-    """ Loads a file, checks it's data structure, and finally loads it to the buffer. """
-
+    """ Φορτώνει ένα αρχείο, ελέγχει τη δομή του, και τελικά προσθέτει το περιεχόμενό του στον buffer. """
     # Update Status Text
-    update_status("Loading from...")
-
+    update_status("Φόρτωση από...")
     # Get path of file to Load in a temporary variable
     load_path = filedialog.askopenfilename(filetypes = (("GeneApp CSV", "*.csv"), ("All files", "*")))
-
     # Check if temporary path is okay and load it or not
     if load_path != "":
-        update_status("File loaded! Checking data structure from file...")
+        update_status("Αρχείο φορτώθηκε! Έλεγχος δομής του αρχείου...")
         # Open the file for check
         with open(load_path, encoding="utf-8") as f:
             # Pre-check if header is compatible with our data structure
@@ -109,14 +50,13 @@ def on_load():
                 template = ["ID","Name","Birth","Death","Sex","Father","Mother","Description"]
                 # Data structure seems OK
                 if hd == template:
-                    root.after(1200, update_status, "Data structure seems correct. Buffer is loaded!")
+                    root.after(1200, update_status, "Η δομή φαίνεται σωστή. Ο Buffer φορτώθηκε!")
                 else:
-                    root.after(1200, update_status, "Incorrect data structure!")
+                    root.after(1200, update_status, "Η δομή του αρχείου είναι μη εγκύρη!")
                     return
             except:
-                root.after(1200, update_status, "File unreadable or corrupted!")
+                root.after(1200, update_status, "Το αρχείο είναι μη αναγνώσιμο ή κατεστραμμένο!")
                 return
-        
         # If we made it this far, file is probably OK
         global buffer
         # Clear the buffer (preventing duplicate records)
@@ -125,12 +65,122 @@ def on_load():
         with open(load_path, encoding="utf-8") as f:
             for line in f.readlines():
                 buffer += line
-
     else:
-        update_status("Loading failed...")
+        update_status("Η φόρτωση απέτυχε...")
 
-# Load Button
-load_btn = ttk.Button(app, text="Load from...", command=on_load)
+
+def create_interface():
+    ''' Δημιουργεί το βασικό GUI της εφαρμογής. '''
+    # Set Root's Window Properties
+    root.title("GeneApp - Εφαρμογή Γενεαλογικού Δέντρου")
+    root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
+    # Create App Frame
+    app = tk.Frame(root)
+    # Heading
+    intro = ttk.Label(app,
+        text="GeneApp - Εφαρμογή Γενεαλογικού Δέντρου",
+        font=("Arial 16"), foreground="#151515",
+    )
+    # Status Bar
+    global status_var
+    status_var = tk.StringVar()
+    status = ttk.Label(root,
+        textvariable=status_var,
+        foreground="#151515", background="#ddd", padding=5
+    )
+    # Insert Person
+    insert_btn = ttk.Button(app, text="Εισαγωγή", command=on_insert)
+    insert_lbl = ttk.Label(app,
+        text="Εισάγετε νέο άτομο στο Γενεαλογικό Δέντρο ή επεξεργαστείτε ένα υπάρχων.",
+        font=("Arial 12"), foreground="#151515", background="#ddd"
+    )
+    # Delete Person
+    delete_btn = ttk.Button(app, text="Διαγραφή", command="")
+    delete_lbl = ttk.Label(app,
+        text="Αφαιρέστε ένα άτομο από το Γενεαλογικό Δέντρο.",
+        font=("Arial 12"), background="#ddd", foreground="#151515"
+    )
+    # View Graph Tree
+    view_btn = ttk.Button(app, text="Προβολή Δέντρου", command=on_view)
+    view_lbl = ttk.Label(app,
+        text="Προβολή ενός γράφου του Γενεαλογικού Δέντρου.",
+        font=("Arial 12"), background="#ddd", foreground="#151515"
+    )
+    # Save Button
+    save_btn = ttk.Button(app, text="Αποθήκευση...", command=on_save)
+    # Load Button
+    load_btn = ttk.Button(app, text="Άνοιγμα από...", command=on_load)
+    # Place Widgets in App Frame
+    intro.grid(row=0, columnspan=10, sticky=tk.W + tk.E, pady=10)
+    insert_btn.grid(row=1, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
+    insert_lbl.grid(row=1, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
+    delete_btn.grid(row=2, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
+    delete_lbl.grid(row=2, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
+    view_btn.grid(row=3, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
+    view_lbl.grid(row=3, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
+    ttk.Button(app, text="Debug", command=on_print).grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
+    save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
+    load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
+    # Place Frame in Root Window
+    app.grid(padx=14, pady=14)
+    status.grid(sticky=tk.W + tk.E)
+    # Start event loop
+    root.mainloop()
+
+
+def on_insert():
+    ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί "Προσθήκη". '''
+    global subwindow
+    # Do not allow multiple sub windows to be opened
+    if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
+        # Create subwindow and define its properties
+        subwindow = tk.Toplevel(root)
+        subwindow.title("GeneApp - Genealogy Tree Application")
+        subwindow.columnconfigure(0, weight=1)
+        subwindow.rowconfigure(0, weight=1)
+        # Create a frame wrapper inside subwindow
+        wrapper = ttk.Frame(subwindow)
+        ## Create the form
+        # ID
+        ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0, column=0, columnspan=4, sticky=tk.W + tk.E)
+        id = tk.IntVar()
+        ttk.Entry(wrapper, textvariable=id).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
+        # Name
+        ttk.Label(wrapper, text="Name", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=1, column=0, columnspan=4, sticky=tk.W + tk.E)
+        name = tk.StringVar()
+        ttk.Entry(wrapper, textvariable=name).grid(row=1, column=4, columnspan=6, padx=8, pady=4)
+        # Birth Date
+        ttk.Label(wrapper, text="Birth Date", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=2, column=0, columnspan=4, sticky=tk.W + tk.E)
+        birth = tk.StringVar()
+        ttk.Entry(wrapper, textvariable=birth).grid(row=2, column=4, columnspan=6, padx=8, pady=4)
+        # Death Date
+        ttk.Label(wrapper, text="Death Date", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=3, column=0, columnspan=4, sticky=tk.W + tk.E)
+        death = tk.StringVar()
+        ttk.Entry(wrapper, textvariable=death).grid(row=3, column=4, columnspan=6, padx=8, pady=4)
+        # Sex
+        ttk.Label(wrapper, text="Sex", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=4, column=0, columnspan=4, sticky=tk.W + tk.E)
+        sex_box = tk.Frame(wrapper)
+        sex = tk.IntVar()
+        male = ttk.Radiobutton(sex_box, text="Male", variable=sex, value=1).grid(row=0, column=0)
+        female = ttk.Radiobutton(sex_box, text="Female", variable=sex, value=2).grid(row=0, column=1)
+        sex_box.grid(row=4, column=4, columnspan=6, padx=8, pady=4)
+        # Father ID
+        ttk.Label(wrapper, text="Father ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=5, column=0, columnspan=4, sticky=tk.W + tk.E)
+        f_ID = tk.IntVar()
+        ttk.Entry(wrapper, textvariable=f_ID).grid(row=5, column=4, columnspan=6, padx=8, pady=4)
+        # Mother ID
+        ttk.Label(wrapper, text="Mother ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=6, column=0, columnspan=4, sticky=tk.W + tk.E)
+        m_ID = tk.IntVar()
+        ttk.Entry(wrapper, textvariable=m_ID).grid(row=6, column=4, columnspan=6, padx=8, pady=4)
+        # Description
+        ttk.Label(wrapper, text="Description", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=7, column=0, columnspan=5, sticky=tk.W + tk.E)
+        desc = tk.Text(wrapper, spacing1=2, spacing2=3, undo=True, maxundo=10, wrap='char', height=2, width=27)
+        desc.grid(row=8, column=0, columnspan=5, sticky=tk.W + tk.E, pady=4)
+        # Submit Button
+        ttk.Button(wrapper, text="Προσθήκη", command=lambda: on_submit(str(id.get()), str(name.get()), str(birth.get()), str(death.get()), str(sex.get()), str(f_ID.get()), str(m_ID.get()), desc.get('1.0','end-1c'))).grid(row=9)
+        # Place wrapper (frame) in the root window
+        wrapper.grid(padx=14, pady=14)
 
 
 def on_print():
@@ -140,28 +190,72 @@ def on_print():
     # print(pd.read_csv(load_path))
 
 
+def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
+    ''' Συνάρτηση που τρέχει όταν πατήσει ο χρήστης το κουμπί submit στην προσθήκη νέου ατόμου. '''
+    global buffer
+    buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
+    # Destroy Subwindow and allow to be recreated
+    subwindow.destroy()
+    # Update Status Message
+    update_status("Προστέθηκε ένα άτομο!")
+
+
 def update_status(txt):
-    """ Updates the status bar message of main application. """
+    ''' Ανανεώνει το μήνυμα κατάστασης στην κάτω μπάρα της εφαρμογής. '''
     status_var.set(txt)
 
 
-# Place Widgets in App Frame
-intro.grid(row=0, columnspan=10, sticky=tk.W + tk.E, pady=10)
-insert_btn.grid(row=1, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
-insert_lbl.grid(row=1, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
-delete_btn.grid(row=2, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
-delete_lbl.grid(row=2, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
-view_btn.grid(row=3, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
-view_lbl.grid(row=3, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
-ttk.Button(app, text="Debug", command=on_print).grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
-save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
-load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
+def on_view():
+    ''' Συνάρτηση που τρέχει όταν ο χρήστης πατήσει το κουμπί της προβολής δέντρου. '''
+    data = pd.read_csv(StringIO(buffer), index_col=0)
+    data["Death"]=data["Death"].astype(str)
+
+    # Προσθήκη Κορυφών
+    for person in data.index:
+        newNode = data.loc[person, "Name"]
+        if data.loc[person, "Sex"] == 1:
+            if data.loc[person, "Death"]=="nan":
+                livingMales.append(newNode)
+            else:
+                deadMales.append(newNode)
+        else:
+            if data.loc[person, "Death"]=="nan":
+                livingFemales.append(newNode)
+            else:
+                deadFemales.append(newNode)
+        T.add_node(newNode)
+
+    # Προσθήκη Ακμών
+    for person in data.index:
+        if data.loc[person, "Father"] != 0:
+            personsFatherNumber = data.loc[person, "Father"]
+            personsFather = data.loc[personsFatherNumber, 'Name']
+            v = personsFather
+            u = data.loc[person, "Name"]
+            T.add_edge(v, u)
+        if data.loc[person, "Mother"] != 0:
+            personsMotherNumber = data.loc[person, "Mother"]
+            personsMother = data.loc[personsMotherNumber, "Name"]
+            v = personsMother
+            u = data.loc[person, "Name"]
+            T.add_edge(v, u)
+    
+    # Σχεδίαση Γράφου
+    pos = graphviz_layout(T, prog="dot")
+
+    #pos = graphviz_layout(T, prog="twopi")  #different drawing method
+    nx.draw_networkx_nodes(T, pos, nodelist=livingMales, node_color="tab:blue", alpha = 1.0)
+    nx.draw_networkx_nodes(T, pos, nodelist=deadMales, node_color="tab:blue", alpha = 0.2)
+    nx.draw_networkx_nodes(T, pos, nodelist=livingFemales, node_color="tab:red", alpha = 1.0)
+    nx.draw_networkx_nodes(T, pos, nodelist=deadFemales, node_color="tab:red", alpha = 0.2)
+
+    nx.draw_networkx_labels(T, pos, labels = {n: n for n in livingMales}, alpha = 1.0)
+    nx.draw_networkx_labels(T, pos, labels = {n: n for n in deadMales}, alpha = 0.2)
+    nx.draw_networkx_labels(T, pos, labels = {n: n for n in livingFemales}, alpha = 1.0)
+    nx.draw_networkx_labels(T, pos, labels = {n: n for n in deadFemales}, alpha = 0.2)
+
+    nx.draw_networkx_edges(T, pos)
+    plt.show()
 
 
-# Place Frame in Root Window
-app.grid(padx=14, pady=14)
-status.grid(sticky=tk.W + tk.E)
-
-
-# Start event loop
-root.mainloop()
+create_interface()
