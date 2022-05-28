@@ -96,7 +96,7 @@ def create_interface():
         font=("Arial 12"), foreground="#151515", background="#ddd"
     )
     # Delete Person
-    delete_btn = ttk.Button(app, text="Διαγραφή", command="")
+    delete_btn = ttk.Button(app, text="Διαγραφή", command=on_delete)
     delete_lbl = ttk.Label(app,
         text="Αφαιρέστε ένα άτομο από το Γενεαλογικό Δέντρο.",
         font=("Arial 12"), background="#ddd", foreground="#151515"
@@ -144,38 +144,38 @@ def on_insert():
         ## Create the form
         # ID
         ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0, column=0, columnspan=4, sticky=tk.W + tk.E)
-        id = tk.IntVar()
+        id = tk.IntVar(value=get_ID(buffer))
         ttk.Entry(wrapper, textvariable=id).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
         # Name
-        ttk.Label(wrapper, text="Name", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=1, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="Ονοματεπώνυμο", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=1, column=0, columnspan=4, sticky=tk.W + tk.E)
         name = tk.StringVar()
         ttk.Entry(wrapper, textvariable=name).grid(row=1, column=4, columnspan=6, padx=8, pady=4)
         # Birth Date
-        ttk.Label(wrapper, text="Birth Date", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=2, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="Ημερομηνία Γέννησης", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=2, column=0, columnspan=4, sticky=tk.W + tk.E)
         birth = tk.StringVar()
         ttk.Entry(wrapper, textvariable=birth).grid(row=2, column=4, columnspan=6, padx=8, pady=4)
         # Death Date
-        ttk.Label(wrapper, text="Death Date", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=3, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="Ημερομηνία Θανάτου", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=3, column=0, columnspan=4, sticky=tk.W + tk.E)
         death = tk.StringVar()
         ttk.Entry(wrapper, textvariable=death).grid(row=3, column=4, columnspan=6, padx=8, pady=4)
         # Sex
-        ttk.Label(wrapper, text="Sex", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=4, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="Φύλο", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=4, column=0, columnspan=4, sticky=tk.W + tk.E)
         sex_box = tk.Frame(wrapper)
         sex = tk.IntVar()
         male = ttk.Radiobutton(sex_box, text="Male", variable=sex, value=1).grid(row=0, column=0)
         female = ttk.Radiobutton(sex_box, text="Female", variable=sex, value=2).grid(row=0, column=1)
         sex_box.grid(row=4, column=4, columnspan=6, padx=8, pady=4)
         # Father ID
-        ttk.Label(wrapper, text="Father ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=5, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="ID Πατέρα", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=5, column=0, columnspan=4, sticky=tk.W + tk.E)
         f_ID = tk.IntVar()
         ttk.Entry(wrapper, textvariable=f_ID).grid(row=5, column=4, columnspan=6, padx=8, pady=4)
         # Mother ID
-        ttk.Label(wrapper, text="Mother ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=6, column=0, columnspan=4, sticky=tk.W + tk.E)
+        ttk.Label(wrapper, text="ID Μητέρας", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=6, column=0, columnspan=4, sticky=tk.W + tk.E)
         m_ID = tk.IntVar()
         ttk.Entry(wrapper, textvariable=m_ID).grid(row=6, column=4, columnspan=6, padx=8, pady=4)
         # Description
-        ttk.Label(wrapper, text="Description", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=7, column=0, columnspan=5, sticky=tk.W + tk.E)
-        desc = tk.Text(wrapper, spacing1=2, spacing2=3, undo=True, maxundo=10, wrap='char', height=2, width=27)
+        ttk.Label(wrapper, text="Περιγραφή", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=7, column=0, columnspan=5, sticky=tk.W + tk.E)
+        desc = tk.Text(wrapper, spacing1=2, spacing2=3, undo=True, maxundo=10, wrap='char', height=2, width=35)
         desc.grid(row=8, column=0, columnspan=5, sticky=tk.W + tk.E, pady=4)
         # Submit Button
         ttk.Button(wrapper, text="Προσθήκη", command=lambda: on_submit(str(id.get()), str(name.get()), str(birth.get()), str(death.get()), str(sex.get()), str(f_ID.get()), str(m_ID.get()), desc.get('1.0','end-1c'))).grid(row=9)
@@ -184,25 +184,90 @@ def on_insert():
 
 
 def on_print():
-    """ Prints some info for debugging purposes. """
+    ''' Εκτυπώνει κάποιες πληροφορίες για debugging λόγους. '''
     print("--- --- --- ---")
     print("Buffer: \n" + buffer)
-    # print(pd.read_csv(load_path))
+    print("--- --- --- ---\n")
+    print("LivingMales: \n")
+    for lMale in livingMales:
+        print(lMale)
+    print("--- --- --- ---\n")
+    print("DeadMales: \n")
+    for dMale in deadMales:
+        print(dMale)
+    print("--- --- --- ---\n")
+    print("LivingFemales: \n")
+    for lFemale in livingFemales:
+        print(lFemale)
+    print("--- --- --- ---\n")
+    print("DeadFemales: \n")
+    for dFemale in deadFemales:
+        print(dFemale)
 
 
 def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
     ''' Συνάρτηση που τρέχει όταν πατήσει ο χρήστης το κουμπί submit στην προσθήκη νέου ατόμου. '''
     global buffer
-    buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
-    # Destroy Subwindow and allow to be recreated
-    subwindow.destroy()
-    # Update Status Message
-    update_status("Προστέθηκε ένα άτομο!")
+    try:
+        if int(id) not in get_IDs(buffer):
+            buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
+            # Destroy Subwindow and allow to be recreated
+            subwindow.destroy()
+            # Update Status Message
+            update_status("Προστέθηκε ένα άτομο!")
+        else:
+            update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
+    except:
+        print("Υπήρξε σφάλμα στην on_submit().")
 
 
 def update_status(txt):
     ''' Ανανεώνει το μήνυμα κατάστασης στην κάτω μπάρα της εφαρμογής. '''
     status_var.set(txt)
+
+
+def on_delete():
+    ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί delete. '''
+    global subwindow
+    # Do not allow multiple sub windows to be opened
+    if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
+        # Create subwindow and define its properties
+        subwindow = tk.Toplevel(root)
+        subwindow.title("GeneApp - Genealogy Tree Application")
+        subwindow.columnconfigure(0, weight=1)
+        subwindow.rowconfigure(0, weight=1)
+        # Create a frame wrapper inside subwindow
+        wrapper = ttk.Frame(subwindow)
+        ttk.Label(wrapper, text="Όνομα", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0,column=0, columnspan=4, sticky=tk.W + tk.E)
+        ID = tk.IntVar()
+        ttk.Entry(wrapper, textvariable=ID).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
+        ttk.Button(wrapper, text="Εντάξει", command="").grid(row=9)
+        ttk.Button(wrapper, text="Έξοδος", command="").grid(row=9, column=4)
+        wrapper.grid(padx=14, pady=14)
+
+
+def buffer_to_lists(buffer):
+    ''' Συνάρτηση που μετατρέπει το String στον buffer σε λίστες με τους αντίστοιχους άνδρες/γυναίκες ζωντανούς/νεκρούς. '''
+    pass
+    buffer.split("/n").split()
+
+
+def get_ID(buffer):
+    ''' Συνάρτηση που δέχεται το String του Buffer και βρίσκει το αμέσως επόμενο διαθέσιμο ID. '''
+    try:
+        return int(buffer.split("\n")[-2].split(",")[0])+1 #[-2] γιατί το τελευταίο στοιχείο της λίστας είναι το κενό (\n)
+    except:
+        return 0 # Άδειο Buffer, λογικά περιέχει μόνο τα headers, άρα επιστρέφουμε για ID το 0.
+
+
+def get_IDs(buffer):
+    ''' Συνάρτηση που δέχεται το String του Buffer και γυρνάει όλα τα IDs σε μια λίστα. '''
+    IDs = []
+    try:
+        [IDs.append(int(record.split(",")[0])) for record in buffer.split("\n")[1:-1]] #[1:-1] γιατί το πρώτο στοιχείο είναι το "ID" και το τελευταίο το κενό (\n)
+        return IDs
+    except:
+        print("Δεν μπόρεσε να δημιουργηθεί λίστα με όλα τα IDs.")
 
 
 def on_view():
@@ -243,7 +308,6 @@ def on_view():
     # Σχεδίαση Γράφου
     pos = graphviz_layout(T, prog="dot")
 
-    #pos = graphviz_layout(T, prog="twopi")  #different drawing method
     nx.draw_networkx_nodes(T, pos, nodelist=livingMales, node_color="tab:blue", alpha = 1.0)
     nx.draw_networkx_nodes(T, pos, nodelist=deadMales, node_color="tab:blue", alpha = 0.2)
     nx.draw_networkx_nodes(T, pos, nodelist=livingFemales, node_color="tab:red", alpha = 1.0)
