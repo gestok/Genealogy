@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from io import StringIO
 import networkx as nx
 from networkx.drawing.nx_pydot import graphviz_layout
+import datetime as dt
 
 
 # Global Variables
@@ -14,7 +15,7 @@ livingMales = []
 deadMales = []
 livingFemales = []
 deadFemales = []
-T = nx.DiGraph()    #δημιουργία κενού δικτύου
+T = nx.DiGraph() #δημιουργία κενού δικτύου
 buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
 
 
@@ -161,17 +162,17 @@ def on_insert():
         # Sex
         ttk.Label(wrapper, text="Φύλο", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=4, column=0, columnspan=4, sticky=tk.W + tk.E)
         sex_box = tk.Frame(wrapper)
-        sex = tk.IntVar()
+        sex = tk.IntVar(value=0)
         male = ttk.Radiobutton(sex_box, text="Male", variable=sex, value=1).grid(row=0, column=0)
         female = ttk.Radiobutton(sex_box, text="Female", variable=sex, value=2).grid(row=0, column=1)
         sex_box.grid(row=4, column=4, columnspan=6, padx=8, pady=4)
         # Father ID
         ttk.Label(wrapper, text="ID Πατέρα", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=5, column=0, columnspan=4, sticky=tk.W + tk.E)
-        f_ID = tk.IntVar()
+        f_ID = tk.StringVar()
         ttk.Entry(wrapper, textvariable=f_ID).grid(row=5, column=4, columnspan=6, padx=8, pady=4)
         # Mother ID
         ttk.Label(wrapper, text="ID Μητέρας", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=6, column=0, columnspan=4, sticky=tk.W + tk.E)
-        m_ID = tk.IntVar()
+        m_ID = tk.StringVar()
         ttk.Entry(wrapper, textvariable=m_ID).grid(row=6, column=4, columnspan=6, padx=8, pady=4)
         # Description
         ttk.Label(wrapper, text="Περιγραφή", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=7, column=0, columnspan=5, sticky=tk.W + tk.E)
@@ -208,17 +209,69 @@ def on_print():
 def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
     ''' Συνάρτηση που τρέχει όταν πατήσει ο χρήστης το κουμπί submit στην προσθήκη νέου ατόμου. '''
     global buffer
+
+    # Έλεγχος 1: ID να είναι int και unique (το ID=0 αντιστοιχεί στον άγνωστο γονέα)
     try:
-        if int(id) not in get_IDs(buffer):
-            buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
-            # Destroy Subwindow and allow to be recreated
-            subwindow.destroy()
-            # Update Status Message
-            update_status("Προστέθηκε ένα άτομο!")
-        else:
+        if int(id) in get_IDs(buffer):
             update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
+            return
     except:
-        print("Υπήρξε σφάλμα στην on_submit().")
+        pass
+
+    # Έλεγχος 2: Αν δώθηκε ονομασία και είναι με λατινικούς χαρακτήρες
+    if name == "" or name.isascii() == False:
+        update_status("Εισάγετε ονομασία του ατόμου με λατινικούς χαρακτήρες.")
+        return
+
+    # Έλεγχος 3: Μετατροπή και έλεγχος birth και death σε date_format και σύγκριση αν death > birth
+    if death: # Αν υπάρχει ημερομηνία Θανάτου
+        try:
+            if dt.date(int(death.split("/")[2]),int(death.split("/")[1]),int(death.split("/")[0])) <= dt.date(int(birth.split("/")[2]),int(birth.split("/")[1]),int(birth.split("/")[0])):
+                update_status("Η ημερομηνία γέννησης πρέπει να είναι μικρότερη της ημερομηνίας θανάτου.")
+                return
+        except:
+            update_status('Οι ημερομηνίες πρέπει να είναι της μορφης "d/m/y"!')
+            return
+    else:
+        try:
+            dt.date(int(birth.split("/")[2]),int(birth.split("/")[1]),int(birth.split("/")[0]))
+        except:
+            update_status('Η ημερομηνία γέννησης πρέπει να είναι της μορφής "d/m/y"!')
+            return
+
+    # Έλεγχος 4: Αν δώθηκε φύλο
+    if int(sex) == 0:
+        update_status("Επιλέξτε το φύλο του ατόμου.")
+        return
+
+    # Έλεγχος 5: f_ID και m_ID να είναι int και να υπάρχουν (αν δώθηκαν) αλλιώς τα θέτουμε 0
+    if f_ID:
+        try:
+            if int(f_ID) not in get_IDs(buffer):
+                update_status("Δεν υπάρχει το ID του πατέρα!")
+                return
+        except:
+            update_status("Δεν δώθηκε αριθμός για ID πατέρα!")
+            return
+    else:
+        f_ID = "0" # Άγνωστος Πατέρας
+    if m_ID:
+        try:
+            if int(m_ID) not in get_IDs(buffer):
+                update_status("Δεν υπάρχει το ID της μητέρας!")
+                return
+        except:
+            update_status("Δεν δώθηκε αριθμός για ID μητέρας!")
+            return
+    else:
+        m_ID = "0" # Άγνωστη Μητέρα
+
+    # Τα δεδομένα μας είναι ΟΚ, εισάγουμε τον χρήστη
+    buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
+    # Destroy Subwindow and allow to be recreated
+    subwindow.destroy()
+    # Update Status Message
+    update_status("Προστέθηκε ένα άτομο!")
 
 
 def update_status(txt):
@@ -257,12 +310,13 @@ def get_ID(buffer):
     try:
         return int(buffer.split("\n")[-2].split(",")[0])+1 #[-2] γιατί το τελευταίο στοιχείο της λίστας είναι το κενό (\n)
     except:
-        return 0 # Άδειο Buffer, λογικά περιέχει μόνο τα headers, άρα επιστρέφουμε για ID το 0.
+        return 1 # Άδειο Buffer, λογικά περιέχει μόνο τα headers, άρα επιστρέφουμε για ID το 1 (το 0 είναι κρατημένο ως "κανένας γονέας").
 
 
 def get_IDs(buffer):
-    ''' Συνάρτηση που δέχεται το String του Buffer και γυρνάει όλα τα IDs σε μια λίστα. '''
+    ''' Συνάρτηση που δέχεται το String του Buffer και γυρνάει όλα τα IDs σε μια λίστα (+ το 0 το οποίο αντιστοιχεί στον άγνωστο γονέα). '''
     IDs = []
+    IDs.append(0)
     try:
         [IDs.append(int(record.split(",")[0])) for record in buffer.split("\n")[1:-1]] #[1:-1] γιατί το πρώτο στοιχείο είναι το "ID" και το τελευταίο το κενό (\n)
         return IDs
