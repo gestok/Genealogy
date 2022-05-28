@@ -265,6 +265,9 @@ def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
             return
     else:
         m_ID = "0" # Άγνωστη Μητέρα
+    
+    # Έλεγχος 6: Διάφορες συγγενικές σχέσεις
+    if not valid(int(f_ID), int(m_ID)): return
 
     # Τα δεδομένα μας είναι ΟΚ, εισάγουμε τον χρήστη
     buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
@@ -272,6 +275,29 @@ def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
     subwindow.destroy()
     # Update Status Message
     update_status("Προστέθηκε ένα άτομο!")
+
+
+def valid(id_1, id_2):
+    ''' Συνάρτηση που δέχεται 2 ID (πατέρα, μητέρα) και ελέγχει αν είναι ΟΚ η γέννηση παιδιού. '''
+    data = pd.read_csv(StringIO(buffer), index_col=0)
+    data["Death"]=data["Death"].astype(str)
+
+    # Έλεγχος αν τα IDs είναι διαφορετικού φύλου
+    if id_1 != 0 and id_2 != 0: # Εφόσον υπάρχουν και πατέρας και μητέρα
+        if buffer.split("\n")[id_1].split(",")[4] == buffer.split("\n")[id_2].split(",")[4]:
+            update_status("Οι γονείς πρέπει να είναι διαφορετικού φύλου!")
+            return False
+
+    # Έλεγχος αν τα IDs έχουν σχέση παιδιού-γονέα
+
+    # Έλεγχος αν τα IDs είναι αδέρφια
+
+    # Έλεγχος αν τα IDs είναι ξαδέρφια
+
+    # Έλεγχος αν τα IDs είναι δεύτερα ξαδέρφια
+
+    # Όλες οι σχέσεις ΟΚ
+    return True
 
 
 def update_status(txt):
@@ -299,12 +325,6 @@ def on_delete():
         wrapper.grid(padx=14, pady=14)
 
 
-def buffer_to_lists(buffer):
-    ''' Συνάρτηση που μετατρέπει το String στον buffer σε λίστες με τους αντίστοιχους άνδρες/γυναίκες ζωντανούς/νεκρούς. '''
-    pass
-    buffer.split("/n").split()
-
-
 def get_ID(buffer):
     ''' Συνάρτηση που δέχεται το String του Buffer και βρίσκει το αμέσως επόμενο διαθέσιμο ID. '''
     try:
@@ -329,7 +349,13 @@ def on_view():
     data = pd.read_csv(StringIO(buffer), index_col=0)
     data["Death"]=data["Death"].astype(str)
 
-    # Προσθήκη Κορυφών
+    # Καθάρισμα όλων των λιστών
+    livingMales.clear()
+    deadMales.clear()
+    livingFemales.clear()
+    deadFemales.clear()
+
+    # Προσθήκη Κορυφών και δημιουργία λιστών
     for person in data.index:
         newNode = data.loc[person, "Name"]
         if data.loc[person, "Sex"] == 1:
