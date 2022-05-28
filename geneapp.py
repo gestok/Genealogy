@@ -279,22 +279,105 @@ def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
 
 def valid(id_1, id_2):
     ''' Συνάρτηση που δέχεται 2 ID (πατέρα, μητέρα) και ελέγχει αν είναι ΟΚ η γέννηση παιδιού. '''
-    data = pd.read_csv(StringIO(buffer), index_col=0)
-    data["Death"]=data["Death"].astype(str)
-
-    # Έλεγχος αν τα IDs είναι διαφορετικού φύλου
     if id_1 != 0 and id_2 != 0: # Εφόσον υπάρχουν και πατέρας και μητέρα
-        if buffer.split("\n")[id_1].split(",")[4] == buffer.split("\n")[id_2].split(",")[4]:
+
+        # Δεδομένα σε λίστα: [ID,Name,Birth,Death,Sex,Father,Mother,Description]
+        # Γονιών
+        parent1 = buffer.split("\n")[id_1].split(",")
+        parent2 = buffer.split("\n")[id_2].split(",")
+
+        # Παππούδων
+        gparent1 = [] # Λίστα με γονείς πρώτου ID
+        gparent1_1 = buffer.split("\n")[int(parent1[5])].split(",")
+        if gparent1_1[0].isnumeric(): gparent1.append(gparent1_1[0])
+        gparent1_2 = buffer.split("\n")[int(parent1[6])].split(",")
+        if gparent1_2[0].isnumeric(): gparent1.append(gparent1_2[0])
+
+        gparent2 = [] # Λίστα με γονείς δεύτερου ID
+        gparent2_1 = buffer.split("\n")[int(parent2[5])].split(",")
+        if gparent2_1[0].isnumeric(): gparent2.append(gparent2_1[0])
+        gparent2_2 = buffer.split("\n")[int(parent2[6])].split(",")
+        if gparent2_2[0].isnumeric(): gparent2.append(gparent2_2[0])
+
+        # Προπαππούδων
+        ggparent1 = [] # Λίστα με παππούδες πρώτου ID
+        for grandparent in gparent1:
+            try:
+                if int(buffer.split("\n")[int(grandparent)].split(",")[5]) != 0:
+                    ggparent1.append( buffer.split("\n")[int(grandparent)].split(",")[5] )
+            except:
+                pass
+            try:
+                if int(buffer.split("\n")[int(grandparent)].split(",")[6]) != 0:
+                    ggparent1.append( buffer.split("\n")[int(grandparent)].split(",")[6] )
+            except:
+                pass
+
+        ggparent2 = [] # Λίστα με παππούδες δεύτερου ID
+        for grandparent in gparent2:
+            try:
+                if int(buffer.split("\n")[int(grandparent)].split(",")[5]) != 0:
+                    ggparent2.append( buffer.split("\n")[int(grandparent)].split(",")[5] )
+            except:
+                pass
+            try:
+                if int(buffer.split("\n")[int(grandparent)].split(",")[6]) != 0:
+                    ggparent2.append( buffer.split("\n")[int(grandparent)].split(",")[6] )
+            except:
+                pass
+
+        # Προπροπαππούδων
+        gggparent1 = [] # Λίστα με προπαππούδες πρώτου ID
+        for grandgrandparent in ggparent1:
+            try:
+                if int(buffer.split("\n")[int(grandgrandparent)].split(",")[5]) != 0:
+                    gggparent1.append( buffer.split("\n")[int(grandgrandparent)].split(",")[5] )
+            except:
+                pass
+            try:
+                if int(buffer.split("\n")[int(grandgrandparent)].split(",")[6]) != 0:
+                    gggparent1.append( buffer.split("\n")[int(grandgrandparent)].split(",")[6] )
+            except:
+                pass
+
+        gggparent2 = [] # Λίστα με προπαππούδες δεύτερου ID
+        for grandgrandparent in ggparent2:
+            try:
+                if int(buffer.split("\n")[int(grandgrandparent)].split(",")[5]) != 0:
+                    gggparent2.append( buffer.split("\n")[int(grandgrandparent)].split(",")[5] )
+            except:
+                pass
+            try:
+                if int(buffer.split("\n")[int(grandgrandparent)].split(",")[6]) != 0:
+                    gggparent2.append( buffer.split("\n")[int(grandgrandparent)].split(",")[6] )
+            except:
+                pass
+
+        # Έλεγχος αν τα IDs είναι διαφορετικού Sex
+        if parent1[4] == parent2[4]:
             update_status("Οι γονείς πρέπει να είναι διαφορετικού φύλου!")
             return False
 
-    # Έλεγχος αν τα IDs έχουν σχέση παιδιού-γονέα
+        # Έλεγχος αν τα IDs έχουν σχέση παιδιού-γονέα
+        # Οκ, αλλά τι γίνεται όμως αν έχουμε παππού με εγγόνη; Χαμός..
 
-    # Έλεγχος αν τα IDs είναι αδέρφια
+        # Έλεγχος αν τα IDs είναι αδέρφια
+        for grandparent in gparent1:
+            if grandparent in gparent2:
+                update_status("Οι γονείς του ατόμου δεν μπορούν να είναι αδέρφια!")
+                return False
 
-    # Έλεγχος αν τα IDs είναι ξαδέρφια
+        # Έλεγχος αν τα IDs είναι ξαδέρφια
+        for grandparent in ggparent1:
+            if grandparent in ggparent2:
+                update_status("Οι γονείς του ατόμου δεν μπορούν να είναι ξαδέρφια!")
+                return False
 
-    # Έλεγχος αν τα IDs είναι δεύτερα ξαδέρφια
+        # Έλεγχος αν τα IDs είναι δεύτερα ξαδέρφια
+        for grandparent in gggparent1:
+            if grandparent in gggparent2:
+                update_status("Οι γονείς του ατόμου δεν μπορούν να είναι δεύτερα ξαδέρφια!")
+                return False
 
     # Όλες οι σχέσεις ΟΚ
     return True
