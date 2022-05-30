@@ -1,4 +1,3 @@
-from optparse import Option
 import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
 from tkinter.messagebox import askyesno
@@ -23,11 +22,11 @@ buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
 
 def on_save():
     """ Γράφει τα δεδομένα του buffer σε ένα υπάρχων ή νέο αρχείο που θα καθορίσει ο χρήστης. """
-    # Update Status Text
     update_status("Αποθήκευση...")
-    # Grab Path and Filename to save
+    # Δημιουργία διαδρομής και ονομασίας για αποθήκευση
     save_dir = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=(("GeneApp CSV File", "*.csv"), ("All files", "*")))
-    # Try to see if save directory is valid to save
+
+    # Έλεγχος αν η διαδρομή είναι εντάξει για αποθήκευση
     try:
         with open(save_dir, "w", encoding="utf-8") as f:
             f.write(buffer)
@@ -147,7 +146,7 @@ def on_insert():
         ## Δημιουργία της φόρμας
         # ID
         ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0, column=0, columnspan=4, sticky=tk.W + tk.E)
-        id = tk.StringVar(value=get_ID(buffer))
+        id = tk.StringVar(value=get_ID())
         ttk.Entry(wrapper, textvariable=id).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
         # Name
         ttk.Label(wrapper, text="Ονοματεπώνυμο", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=1, column=0, columnspan=4, sticky=tk.W + tk.E)
@@ -211,7 +210,7 @@ def on_print():
 def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     ''' Συνάρτηση που τρέχει όταν πατήσει ο χρήστης το κουμπί submit στην προσθήκη νέου ατόμου. '''
     global buffer
-
+    replacing = False
 
     # Έλεγχος 1: ID να είναι int και unique (το ID=0 αντιστοιχεί στον άγνωστο γονέα)
     try:
@@ -278,14 +277,16 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     # Έλεγχος 6: Διάφορες συγγενικές σχέσεις
     if not valid(int(f_ID), int(m_ID)): return
 
-    if replacing: # Αντικατάσταση Χρήση
+    # Αντικατάσταση Χρήστη
+    if replacing:
         data = pd.read_csv(StringIO(buffer), index_col=0)
         data.loc[int(id), "Name"] = name
         data.loc[int(id), "Birth"] = birth
         data.loc[int(id), "Death"] = death
-        data.loc[int(id), "Desc"] = desc
-        buffer = data.to_csv()
-    else: # Εισαγωγή Χρήστη
+        data.loc[int(id), "Description"] = desc
+        buffer = data.to_csv(line_terminator="\n")
+    # Εισαγωγή Χρήστη
+    else:
         buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
 
     subwindow.destroy() # Καταστρέφουμε το υποπαράθυρο
