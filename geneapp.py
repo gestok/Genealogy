@@ -1,5 +1,7 @@
+from optparse import Option
 import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
+from tkinter.messagebox import askyesno
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import StringIO
@@ -11,10 +13,10 @@ import datetime as dt
 # Global Variables
 root = tk.Tk() # Create Root Window
 subwindow = None # Sub window
-livingMales = []
-deadMales = []
-livingFemales = []
-deadFemales = []
+livingMales = {}
+deadMales = {}
+livingFemales = {}
+deadFemales = {}
 T = nx.DiGraph() #δημιουργία κενού δικτύου
 buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
 
@@ -72,47 +74,47 @@ def on_load():
 
 def create_interface():
     ''' Δημιουργεί το βασικό GUI της εφαρμογής. '''
-    # Set Root's Window Properties
+    # Ιδιότητες Παραθύρου Root
     root.title("GeneApp - Εφαρμογή Γενεαλογικού Δέντρου")
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
-    # Create App Frame
+    # Δημιουργία ενός wrapper frame για το Application
     app = tk.Frame(root)
-    # Heading
+    # Τίτλος
     intro = ttk.Label(app,
         text="GeneApp - Εφαρμογή Γενεαλογικού Δέντρου",
         font=("Arial 16"), foreground="#151515",
     )
-    # Status Bar
+    # Μπάρα Κατάστασης
     global status_var
     status_var = tk.StringVar()
     status = ttk.Label(root,
         textvariable=status_var,
         foreground="#151515", background="#ddd", padding=5
     )
-    # Insert Person
+    # Εισαγωγή Ατόμου
     insert_btn = ttk.Button(app, text="Εισαγωγή", command=on_insert)
     insert_lbl = ttk.Label(app,
         text="Εισάγετε νέο άτομο στο Γενεαλογικό Δέντρο ή επεξεργαστείτε ένα υπάρχων.",
         font=("Arial 12"), foreground="#151515", background="#ddd"
     )
-    # Delete Person
+    # Διαγραφή Ατόμου
     delete_btn = ttk.Button(app, text="Διαγραφή", command=on_delete)
     delete_lbl = ttk.Label(app,
         text="Αφαιρέστε ένα άτομο από το Γενεαλογικό Δέντρο.",
         font=("Arial 12"), background="#ddd", foreground="#151515"
     )
-    # View Graph Tree
+    # Προβολή Γράφου
     view_btn = ttk.Button(app, text="Προβολή Δέντρου", command=on_view)
     view_lbl = ttk.Label(app,
         text="Προβολή ενός γράφου του Γενεαλογικού Δέντρου.",
         font=("Arial 12"), background="#ddd", foreground="#151515"
     )
-    # Save Button
+    # Κουμπί Αποθήκευσης
     save_btn = ttk.Button(app, text="Αποθήκευση...", command=on_save)
-    # Load Button
+    # Κουμπί Φόρτωσης
     load_btn = ttk.Button(app, text="Άνοιγμα από...", command=on_load)
-    # Place Widgets in App Frame
+    # Τοποθέτηση των Widget στο Application Frame
     intro.grid(row=0, columnspan=10, sticky=tk.W + tk.E, pady=10)
     insert_btn.grid(row=1, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
     insert_lbl.grid(row=1, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
@@ -123,29 +125,29 @@ def create_interface():
     ttk.Button(app, text="Debug", command=on_print).grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
     save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
     load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
-    # Place Frame in Root Window
+    # Τοποθέτηση του Application Frame στο Root παράθυρο
     app.grid(padx=14, pady=14)
     status.grid(sticky=tk.W + tk.E)
-    # Start event loop
+    # Εκκίνηση του interface
     root.mainloop()
 
 
 def on_insert():
     ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί "Προσθήκη". '''
     global subwindow
-    # Do not allow multiple sub windows to be opened
+    # Δεν επιτρέπουμε την πολλαπλή δημιουργία υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
-        # Create subwindow and define its properties
+        # Δημιουργία υποπαραθύρου και ορισμός των μεταβλητών του
         subwindow = tk.Toplevel(root)
         subwindow.title("GeneApp - Genealogy Tree Application")
         subwindow.columnconfigure(0, weight=1)
         subwindow.rowconfigure(0, weight=1)
-        # Create a frame wrapper inside subwindow
+        # Δημιουργία frame wrapper εντός του υποπαραθύρου
         wrapper = ttk.Frame(subwindow)
-        ## Create the form
+        ## Δημιουργία της φόρμας
         # ID
         ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0, column=0, columnspan=4, sticky=tk.W + tk.E)
-        id = tk.IntVar(value=get_ID(buffer))
+        id = tk.StringVar(value=get_ID(buffer))
         ttk.Entry(wrapper, textvariable=id).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
         # Name
         ttk.Label(wrapper, text="Ονοματεπώνυμο", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=1, column=0, columnspan=4, sticky=tk.W + tk.E)
@@ -179,8 +181,8 @@ def on_insert():
         desc = tk.Text(wrapper, spacing1=2, spacing2=3, undo=True, maxundo=10, wrap='char', height=2, width=35)
         desc.grid(row=8, column=0, columnspan=5, sticky=tk.W + tk.E, pady=4)
         # Submit Button
-        ttk.Button(wrapper, text="Προσθήκη", command=lambda: on_submit(str(id.get()), str(name.get()), str(birth.get()), str(death.get()), str(sex.get()), str(f_ID.get()), str(m_ID.get()), desc.get('1.0','end-1c'))).grid(row=9)
-        # Place wrapper (frame) in the root window
+        ttk.Button(wrapper, text="Προσθήκη", command=lambda: on_submit(wrapper, T, str(id.get()), str(name.get()), str(birth.get()), str(death.get()), str(sex.get()), str(f_ID.get()), str(m_ID.get()), desc.get('1.0','end-1c'))).grid(row=9)
+        # Τοποθέτηση του frame wrapper στο root παράθυρο
         wrapper.grid(padx=14, pady=14)
 
 
@@ -206,17 +208,24 @@ def on_print():
         print(dFemale)
 
 
-def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
+def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     ''' Συνάρτηση που τρέχει όταν πατήσει ο χρήστης το κουμπί submit στην προσθήκη νέου ατόμου. '''
     global buffer
 
+
     # Έλεγχος 1: ID να είναι int και unique (το ID=0 αντιστοιχεί στον άγνωστο γονέα)
     try:
-        if int(id) in get_IDs(buffer):
-            update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
+        if int(id) == 0:
+            update_status("Το ID 0 είναι δεσμευμένο από το πρόγραμμα, δοκιμάστε άλλο ID!")
             return
+        elif int(id) in get_IDs(buffer): # Το άτομο υπάρχει ήδη, επεξεργασία;
+            replacing = askyesno(title="Αντικατάσταση;", message="Υπάρχει ήδη άτομο με αυτό το ID! Μπορεί να γίνει αντικατάσταση των βασικών στοιχείων εκτός από τα ID του πατέρα - μητέρας και το φύλο. Αν θέλετε να αλλάξετε τα προηγούμενα στοιχεία, τότε πρέπει να δημιουργήσετε νέο άτομο και να διαγράψετε το υπάρχων. Να γίνει αντικατάσταση;")
+            update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
+            if not replacing:
+                return
     except:
-        pass
+        update_status("Το ID πρέπει να είναι ακέραιος θετικός αριθμός.")
+        return
 
     # Έλεγχος 2: Αν δώθηκε ονομασία και είναι με λατινικούς χαρακτήρες
     if name == "" or name.isascii() == False:
@@ -269,11 +278,17 @@ def on_submit(id, name, birth, death, sex, f_ID, m_ID, desc):
     # Έλεγχος 6: Διάφορες συγγενικές σχέσεις
     if not valid(int(f_ID), int(m_ID)): return
 
-    # Τα δεδομένα μας είναι ΟΚ, εισάγουμε τον χρήστη
-    buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
-    # Destroy Subwindow and allow to be recreated
-    subwindow.destroy()
-    # Update Status Message
+    if replacing: # Αντικατάσταση Χρήση
+        data = pd.read_csv(StringIO(buffer), index_col=0)
+        data.loc[int(id), "Name"] = name
+        data.loc[int(id), "Birth"] = birth
+        data.loc[int(id), "Death"] = death
+        data.loc[int(id), "Desc"] = desc
+        buffer = data.to_csv()
+    else: # Εισαγωγή Χρήστη
+        buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
+
+    subwindow.destroy() # Καταστρέφουμε το υποπαράθυρο
     update_status("Προστέθηκε ένα άτομο!")
 
 
@@ -396,14 +411,14 @@ def update_status(txt):
 def on_delete():
     ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί delete. '''
     global subwindow
-    # Do not allow multiple sub windows to be opened
+    # Δεν επιτρέπουμε την δημιουργία πολλαπλών υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
-        # Create subwindow and define its properties
+        # Δημιουργία υποπαραθύρου και ορισμός των ιδιοτήτων του
         subwindow = tk.Toplevel(root)
         subwindow.title("GeneApp - Genealogy Tree Application")
         subwindow.columnconfigure(0, weight=1)
         subwindow.rowconfigure(0, weight=1)
-        # Create a frame wrapper inside subwindow
+        # Δημιουργία ενός frame wrapper μέσα στο υποπαράθυρο
         wrapper = ttk.Frame(subwindow)
         ttk.Label(wrapper, text="Όνομα", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0,column=0, columnspan=4, sticky=tk.W + tk.E)
         ID = tk.IntVar()
@@ -413,23 +428,25 @@ def on_delete():
         wrapper.grid(padx=14, pady=14)
 
 
-def get_ID(buffer):
-    ''' Συνάρτηση που δέχεται το String του Buffer και βρίσκει το αμέσως επόμενο διαθέσιμο ID. '''
+def get_ID():
+    ''' Συνάρτηση που βρίσκει το αμέσως επόμενο διαθέσιμο ID. '''
     try:
-        return int(buffer.split("\n")[-2].split(",")[0])+1 #[-2] γιατί το τελευταίο στοιχείο της λίστας είναι το κενό (\n)
+        # Παίρνουμε όλα τα ID από την get_IDs, τα σορτάρουμε, διαλέγουμε το τελευταίο (μεγαλύτερο), προσθέτουμε +1, επιστρέφουμε την τιμή
+        return int(sorted(get_IDs(buffer))[-1]+1)
     except:
-        return 1 # Άδειο Buffer, λογικά περιέχει μόνο τα headers, άρα επιστρέφουμε για ID το 1 (το 0 είναι κρατημένο ως "κανένας γονέας").
+        # Το return στο try πρέπει να δώσει στη χειρότερη περίπτωση ID=1
+        # διότι το get_IDs επιστρέφει στην χειρότερη περίπτωση [0]. Οπότε απλά βάζουμε pass.
+        pass
 
 
 def get_IDs(buffer):
     ''' Συνάρτηση που δέχεται το String του Buffer και γυρνάει όλα τα IDs σε μια λίστα (+ το 0 το οποίο αντιστοιχεί στον άγνωστο γονέα). '''
-    IDs = []
-    IDs.append(0)
-    try:
+    IDs = [0]
+    try: # Το try χρειάζεται σε περίπτωση που ο Buffer έχει 1 row με μόνο τα headers (άρα ID != int)
         [IDs.append(int(record.split(",")[0])) for record in buffer.split("\n")[1:-1]] #[1:-1] γιατί το πρώτο στοιχείο είναι το "ID" και το τελευταίο το κενό (\n)
-        return IDs
     except:
-        print("Δεν μπόρεσε να δημιουργηθεί λίστα με όλα τα IDs.")
+        pass
+    return IDs # Η συνάρτηση γυρνάει σίγουρα λίστα με έστω ένα στοιχείο: [0]
 
 
 def on_view():
@@ -437,7 +454,7 @@ def on_view():
     data = pd.read_csv(StringIO(buffer), index_col=0)
     data["Death"]=data["Death"].astype(str)
 
-    # Καθάρισμα όλων των λιστών
+    # Καθάρισμα όλων των λεξικών
     livingMales.clear()
     deadMales.clear()
     livingFemales.clear()
@@ -445,18 +462,18 @@ def on_view():
 
     # Προσθήκη Κορυφών και δημιουργία λιστών
     for person in data.index:
-        newNode = data.loc[person, "Name"]
+        newNode = [str(data.index[person-1]), data.loc[person, "Name"]]
         if data.loc[person, "Sex"] == 1:
             if data.loc[person, "Death"]=="nan":
-                livingMales.append(newNode)
+                livingMales.update({newNode[0]:newNode[1]})
             else:
-                deadMales.append(newNode)
+                deadMales.update({newNode[0]:newNode[1]})
         else:
             if data.loc[person, "Death"]=="nan":
-                livingFemales.append(newNode)
+                livingFemales.update({newNode[0]:newNode[1]})
             else:
-                deadFemales.append(newNode)
-        T.add_node(newNode)
+                deadFemales.update({newNode[0]:newNode[1]})
+        T.add_node(newNode[1])
 
     # Προσθήκη Ακμών
     for person in data.index:
@@ -476,15 +493,15 @@ def on_view():
     # Σχεδίαση Γράφου
     pos = graphviz_layout(T, prog="dot")
 
-    nx.draw_networkx_nodes(T, pos, nodelist=livingMales, node_color="tab:blue", alpha = 1.0)
-    nx.draw_networkx_nodes(T, pos, nodelist=deadMales, node_color="tab:blue", alpha = 0.2)
-    nx.draw_networkx_nodes(T, pos, nodelist=livingFemales, node_color="tab:red", alpha = 1.0)
-    nx.draw_networkx_nodes(T, pos, nodelist=deadFemales, node_color="tab:red", alpha = 0.2)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingMales.values()], node_size=120, node_color="#2196f3", alpha = 1.0, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadMales.values()], node_size=120, node_color="#2196f3", alpha = 0.35, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingFemales.values()], node_size=120, node_color="#f06292", alpha = 1.0, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadFemales.values()], node_size=120, node_color="#f06292", alpha = 0.35, margins=0.1)
 
-    nx.draw_networkx_labels(T, pos, labels = {n: n for n in livingMales}, alpha = 1.0)
-    nx.draw_networkx_labels(T, pos, labels = {n: n for n in deadMales}, alpha = 0.2)
-    nx.draw_networkx_labels(T, pos, labels = {n: n for n in livingFemales}, alpha = 1.0)
-    nx.draw_networkx_labels(T, pos, labels = {n: n for n in deadFemales}, alpha = 0.2)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingMales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadMales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingFemales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadFemales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
 
     nx.draw_networkx_edges(T, pos)
     plt.show()
