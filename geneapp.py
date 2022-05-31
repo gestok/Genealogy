@@ -1,3 +1,4 @@
+from posixpath import split
 import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
 from tkinter.messagebox import askyesno
@@ -218,7 +219,7 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
             update_status("Το ID 0 είναι δεσμευμένο από το πρόγραμμα, δοκιμάστε άλλο ID!")
             return
         elif int(id) in get_IDs(buffer): # Το άτομο υπάρχει ήδη, επεξεργασία;
-            replacing = askyesno(title="Αντικατάσταση;", message="Υπάρχει ήδη άτομο με αυτό το ID! Μπορεί να γίνει αντικατάσταση των βασικών στοιχείων εκτός από τα ID του πατέρα - μητέρας και το φύλο. Αν θέλετε να αλλάξετε τα προηγούμενα στοιχεία, τότε πρέπει να δημιουργήσετε νέο άτομο και να διαγράψετε το υπάρχων. Να γίνει αντικατάσταση;")
+            replacing = askyesno(title="Αντικατάσταση;", message="Το ID:"+ id +" αντιστοιχεί στον "+ buffer.split("\n")[int(id)].split(",")[1] +"! Μπορεί να γίνει αντικατάσταση των βασικών στοιχείων εκτός από τα ID του πατέρα - μητέρας και το φύλο. Αν θέλετε να αλλάξετε τα προηγούμενα στοιχεία, τότε πρέπει να δημιουργήσετε νέο άτομο και να διαγράψετε το υπάρχων. Να γίνει αντικατάσταση;")
             update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
             if not replacing:
                 return
@@ -410,7 +411,7 @@ def update_status(txt):
 
 
 def on_delete():
-    ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί delete. '''
+    ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί Διαγραφή στο interface της βασικής εφαρμογής. '''
     global subwindow
     # Δεν επιτρέπουμε την δημιουργία πολλαπλών υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
@@ -421,12 +422,44 @@ def on_delete():
         subwindow.rowconfigure(0, weight=1)
         # Δημιουργία ενός frame wrapper μέσα στο υποπαράθυρο
         wrapper = ttk.Frame(subwindow)
-        ttk.Label(wrapper, text="Όνομα", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0,column=0, columnspan=4, sticky=tk.W + tk.E)
-        ID = tk.IntVar()
+        ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0,column=0, columnspan=4, sticky=tk.W + tk.E)
+        ID = tk.StringVar()
         ttk.Entry(wrapper, textvariable=ID).grid(row=0, column=4, columnspan=6, padx=8, pady=4)
-        ttk.Button(wrapper, text="Εντάξει", command="").grid(row=9)
-        ttk.Button(wrapper, text="Έξοδος", command="").grid(row=9, column=4)
+        ttk.Button(wrapper, text="Διαγραφή", command=lambda: on_delete_confirm( str(ID.get())) ).grid(row=1)
         wrapper.grid(padx=14, pady=14)
+
+        update_status("Διαγραφή ατόμου...")
+
+
+def on_delete_confirm(ID):
+    ''' Συνάρτηση που τρέχει όταν πατηθεί το "Διαγραφή" στο παράθυρο της Διαγραφής. '''
+    global buffer
+
+    try: # Έλεγχος ότι ID είναι θετικός ακέραιος, διάφορος του 0 και υπάρχει στη λίστα με τα διαθέσιμα IDs.
+        if int(ID) > 0 and int(ID) in get_IDs(buffer):
+            update_status("Το άτομο, που αντιστοιχεί στο ID προς διαγραφή, βρέθηκε.")
+            sure = askyesno(title="Είστε σίγουρος για τη διαγραφή;", message="ΠΡΟΣΟΧΗ: Η διαγραφή του "+ buffer.split("\n")[int(ID)].split(",")[1] +" με ID:"+ ID +" θα διαγράψει και όλα τα άτομα-απογόνους που σχετίζονται με αυτόν. Θέλετε να συνεχίσετε;")
+            if not sure: return
+        else:
+            update_status("Το ID προς διαγραφή δεν υπάρχει.")
+            return
+    except:
+        update_status("Το ID προς διαγραφή δεν είναι έγκυρος αριθμός.")
+        return
+    
+    # Έχουμε έγκυρο ID και επιβεβαίωση χρήστη
+    to_delete = [ID] # Λίστα με ID προς διαγραφή (IDs -> str)
+    for person in to_delete: # Βρόγχος που τρέχει για κάθε ID ατόμου προς διαγραφή
+        for record in buffer.split("\n")[:-1]: # Για κάθε σειρά του Buffer (εκτός απ'την τελευταία που είναι κενή)
+            if str(record.split(",")[5]) == person or str(record.split(",")[6]) == person: # Αν το άτομο έχει για ID πατέρα ή μητέρας το ID ατόμου προς διαγραφή
+                to_delete.append(str(record.split(",")[0])) # Προσθήκη του ID του ατόμου στην λίστα
+    # Διαγραφή Εγγραφών από τον buffer
+    for person in to_delete:
+        for record in buffer.split("\n")[:-1]:
+            if str(record.split(",")[0]) == str(person):
+                buffer = buffer.replace(record+"\n", "")
+    update_status("Το άτομο διαγράφθηκε επιτυχώς!")
+    subwindow.destroy()
 
 
 def get_ID():
@@ -452,60 +485,67 @@ def get_IDs(buffer):
 
 def on_view():
     ''' Συνάρτηση που τρέχει όταν ο χρήστης πατήσει το κουμπί της προβολής δέντρου. '''
-    data = pd.read_csv(StringIO(buffer), index_col=0)
-    data["Death"]=data["Death"].astype(str)
+    # Δεν επιτρέπουμε την δημιουργία πολλαπλών υποπαραθύρων
+    if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
+        global T
+        T.clear() # Καθαρίζουμε τον γράφο για να τον ξανασχεδιάσουμε
 
-    # Καθάρισμα όλων των λεξικών
-    livingMales.clear()
-    deadMales.clear()
-    livingFemales.clear()
-    deadFemales.clear()
+        data = pd.read_csv(StringIO(buffer))
+        data["Death"]=data["Death"].astype(str)
 
-    # Προσθήκη Κορυφών και δημιουργία λιστών
-    for person in data.index:
-        newNode = [str(data.index[person-1]), data.loc[person, "Name"]]
-        if data.loc[person, "Sex"] == 1:
-            if data.loc[person, "Death"]=="nan":
-                livingMales.update({newNode[0]:newNode[1]})
+        # Καθάρισμα όλων των λεξικών
+        livingMales.clear()
+        deadMales.clear()
+        livingFemales.clear()
+        deadFemales.clear()
+
+        # Προσθήκη Κορυφών και δημιουργία λιστών
+        for person in data.index:
+            newNode = [str(data.loc[person, "ID"]), data.loc[person, "Name"]]
+            if data.loc[person, "Sex"] == 1:
+                if data.loc[person, "Death"]=="nan":
+                    livingMales.update({newNode[0]:newNode[1]})
+                else:
+                    deadMales.update({newNode[0]:newNode[1]})
             else:
-                deadMales.update({newNode[0]:newNode[1]})
-        else:
-            if data.loc[person, "Death"]=="nan":
-                livingFemales.update({newNode[0]:newNode[1]})
-            else:
-                deadFemales.update({newNode[0]:newNode[1]})
-        T.add_node(newNode[1])
+                if data.loc[person, "Death"]=="nan":
+                    livingFemales.update({newNode[0]:newNode[1]})
+                else:
+                    deadFemales.update({newNode[0]:newNode[1]})
+            T.add_node(newNode[1])
 
-    # Προσθήκη Ακμών
-    for person in data.index:
-        if data.loc[person, "Father"] != 0:
-            personsFatherNumber = data.loc[person, "Father"]
-            personsFather = data.loc[personsFatherNumber, 'Name']
-            v = personsFather
-            u = data.loc[person, "Name"]
-            T.add_edge(v, u)
-        if data.loc[person, "Mother"] != 0:
-            personsMotherNumber = data.loc[person, "Mother"]
-            personsMother = data.loc[personsMotherNumber, "Name"]
-            v = personsMother
-            u = data.loc[person, "Name"]
-            T.add_edge(v, u)
-    
-    # Σχεδίαση Γράφου
-    pos = graphviz_layout(T, prog="dot")
+        # Προσθήκη Ακμών
+        for person in data.index:
+            if data.loc[person, "Father"] != 0:
+                personsFatherNumber = data.loc[person, "Father"]
+                personsFather = data.loc[data['ID'] == personsFatherNumber,"Name"].values[0]
+                v = personsFather
+                u = data.loc[person, "Name"]
+                T.add_edge(v, u)
+            if data.loc[person, "Mother"] != 0:
+                personsMotherNumber = data.loc[person, "Mother"]
+                personsMother = data.loc[data['ID'] == personsMotherNumber,"Name"].values[0]
+                v = personsMother
+                u = data.loc[person, "Name"]
+                T.add_edge(v, u)
+        
+        # Σχεδίαση Γράφου
+        pos = graphviz_layout(T, prog="dot")
 
-    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingMales.values()], node_size=120, node_color="#2196f3", alpha = 1.0, margins=0.1)
-    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadMales.values()], node_size=120, node_color="#2196f3", alpha = 0.35, margins=0.1)
-    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingFemales.values()], node_size=120, node_color="#f06292", alpha = 1.0, margins=0.1)
-    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadFemales.values()], node_size=120, node_color="#f06292", alpha = 0.35, margins=0.1)
+        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingMales.values()], node_size=120, node_color="#2196f3", alpha = 1.0, margins=0.1)
+        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadMales.values()], node_size=120, node_color="#2196f3", alpha = 0.35, margins=0.1)
+        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingFemales.values()], node_size=120, node_color="#f06292", alpha = 1.0, margins=0.1)
+        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadFemales.values()], node_size=120, node_color="#f06292", alpha = 0.35, margins=0.1)
 
-    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingMales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
-    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadMales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
-    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingFemales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
-    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadFemales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
+        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingMales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadMales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
+        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingFemales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadFemales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
 
-    nx.draw_networkx_edges(T, pos)
-    plt.show()
+        nx.draw_networkx_edges(T, pos)
+        plt.show()
+
+        update_status("Προβολή γράφου...")
 
 
 create_interface()
