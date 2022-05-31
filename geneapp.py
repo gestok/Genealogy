@@ -1,4 +1,3 @@
-from posixpath import split
 import tkinter as tk
 from tkinter import Toplevel, ttk, filedialog
 from tkinter.messagebox import askyesno
