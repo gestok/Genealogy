@@ -121,7 +121,6 @@ def create_interface():
     delete_lbl.grid(row=2, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
     view_btn.grid(row=3, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
     view_lbl.grid(row=3, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
-    ttk.Button(app, text="Debug", command=on_print).grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
     save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
     load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
     # Τοποθέτηση του Application Frame στο Root παράθυρο
@@ -133,9 +132,10 @@ def create_interface():
 
 def on_insert():
     ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί "Προσθήκη". '''
-    global subwindow
+    global subwindow, opened
     # Δεν επιτρέπουμε την πολλαπλή δημιουργία υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
+        opened = True
         # Δημιουργία υποπαραθύρου και ορισμός των μεταβλητών του
         subwindow = tk.Toplevel(root)
         subwindow.title("GeneApp - Genealogy Tree Application")
@@ -184,27 +184,7 @@ def on_insert():
         # Τοποθέτηση του frame wrapper στο root παράθυρο
         wrapper.grid(padx=14, pady=14)
 
-
-def on_print():
-    ''' Εκτυπώνει κάποιες πληροφορίες για debugging λόγους. '''
-    print("--- --- --- ---")
-    print("Buffer: \n" + buffer)
-    print("--- --- --- ---\n")
-    print("LivingMales: \n")
-    for lMale in livingMales:
-        print(lMale)
-    print("--- --- --- ---\n")
-    print("DeadMales: \n")
-    for dMale in deadMales:
-        print(dMale)
-    print("--- --- --- ---\n")
-    print("LivingFemales: \n")
-    for lFemale in livingFemales:
-        print(lFemale)
-    print("--- --- --- ---\n")
-    print("DeadFemales: \n")
-    for dFemale in deadFemales:
-        print(dFemale)
+        update_status("Εισαγωγή ατόμου...")
 
 
 def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
@@ -484,8 +464,8 @@ def get_IDs(buffer):
 
 def on_view():
     ''' Συνάρτηση που τρέχει όταν ο χρήστης πατήσει το κουμπί της προβολής δέντρου. '''
-    # Δεν επιτρέπουμε την δημιουργία πολλαπλών υποπαραθύρων
-    if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
+    # Δεν επιτρέπουμε την δημιουργία πολλαπλών γράφων
+    if not plt.get_fignums():
         global T
         T.clear() # Καθαρίζουμε τον γράφο για να τον ξανασχεδιάσουμε
 
@@ -497,6 +477,9 @@ def on_view():
         deadMales.clear()
         livingFemales.clear()
         deadFemales.clear()
+
+        # Ενημέρωση Χρήστη
+        update_status("Προβολή γράφου...")
 
         # Προσθήκη Κορυφών και δημιουργία λιστών
         for person in data.index:
@@ -527,7 +510,7 @@ def on_view():
                 v = personsMother
                 u = data.loc[person, "Name"]
                 T.add_edge(v, u)
-        
+
         # Σχεδίαση Γράφου
         pos = graphviz_layout(T, prog="dot")
 
@@ -544,7 +527,7 @@ def on_view():
         nx.draw_networkx_edges(T, pos)
         plt.show()
 
-        update_status("Προβολή γράφου...")
+        update_status("")
 
 
 create_interface()
