@@ -2,10 +2,8 @@
 Python Project Γενεαλογικού Δέντρου για το μάθημα ΠΛΗΠΡΟ: Προγραμματισμός.
 
 ## To Do List
-- [ ] GUI Structure
-- [ ] GUI Linking
-- [ ] Main Classes
-- [ ] Class Functions
+- [x] GUI Structure
+- [x] GUI Linking
 - [ ] Standalone Functions
 
 ### GUI Structure (T-Kinter)
