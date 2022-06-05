@@ -9,19 +9,17 @@ Python Project Γενεαλογικού Δέντρου για το μάθημα 
 ### GUI Structure (T-Kinter)
 ```
 Main Container
-  -- Button: "Insert Person"
-    -- Form: ID, First, Last, Birth, Description, Family Connections
-      -- (ID Exists) Container: "Replace Info?"
-      -- (ID Not Exists) Container: "Person Created."
-  -- Button: "Remove Person"
+  -- Button: "Εισαγωγή Ατόμου"
+    -- Form: ID, Name, Birth, Death, Sex, Father, Mother, Description
+      -- (Αν ID Υπάρχει) "Αντικατάσταση;"
+      -- (ID δεν Υπάρχει) "Δημιουργήθηκε νέο άτομο."
+  -- Button: "Διαγραφή Ατόμου"
     -- Form: ID
-      -- (ID Exists) Container: "Person with ID Removed."
-      -- (ID Not Exists) Container: "Person not found."
-  -- View Graph Tree
-  -- Save
-    -- Open Explorer to select saving folder/file.
-  -- Load
-    -- Open Explorer to load file.
+      -- (Αν ID Υπάρχει) "Διαγραφή του ατόμου και όλων των συνδέσεων του προς τα κάτω."
+      -- (ID δεν υπάρχει) "Δεν βρέθηκε το άτομο."
+  -- Προβολή Γράφου
+  -- Αποθήκευση
+    -- Ανοίγει Explorer για επιλογή path, ελέγχει buffer και αποθηκεύει σε csv.
+  -- Φόρτωση
+    -- Ανοίγει Explorer για επιλογή file, ελέγχει αν .csv και τα headers και φορτώνει στον buffer.
 ```
-
-### Classes & Functions
