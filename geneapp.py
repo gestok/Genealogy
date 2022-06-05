@@ -132,10 +132,9 @@ def create_interface():
 
 def on_insert():
     ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί "Προσθήκη". '''
-    global subwindow, opened
+    global subwindow
     # Δεν επιτρέπουμε την πολλαπλή δημιουργία υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
-        opened = True
         # Δημιουργία υποπαραθύρου και ορισμός των μεταβλητών του
         subwindow = tk.Toplevel(root)
         subwindow.title("GeneApp - Genealogy Tree Application")
