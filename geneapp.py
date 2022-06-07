@@ -109,6 +109,8 @@ def create_interface():
         text="Προβολή ενός γράφου του Γενεαλογικού Δέντρου.",
         font=("Arial 12"), background="#ddd", foreground="#151515"
     )
+    # Κουμπί Εκκαθάρισης
+    unload_btn = ttk.Button(app, text="Εκκαθάριση...", command=on_unload)
     # Κουμπί Αποθήκευσης
     save_btn = ttk.Button(app, text="Αποθήκευση...", command=on_save)
     # Κουμπί Φόρτωσης
@@ -121,6 +123,7 @@ def create_interface():
     delete_lbl.grid(row=2, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
     view_btn.grid(row=3, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
     view_lbl.grid(row=3, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
+    unload_btn.grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
     save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
     load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
     # Τοποθέτηση του Application Frame στο Root παράθυρο
@@ -459,6 +462,13 @@ def get_IDs(buffer):
     except:
         pass
     return IDs # Η συνάρτηση γυρνάει σίγουρα λίστα με έστω ένα στοιχείο: [0]
+
+
+def on_unload():
+    global buffer
+    # Reset the buffer 
+    buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
+    update_status("Επιτυχής εκκάθαριση δεδομένων.") 
 
 
 def on_view():
