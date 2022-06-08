@@ -221,17 +221,17 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     # Έλεγχος 3: Μετατροπή και έλεγχος birth και death σε date_format και σύγκριση αν death > birth
     if death: # Αν υπάρχει ημερομηνία Θανάτου
         try:
-            if dt.date(int(death.split("/")[2]),int(death.split("/")[1]),int(death.split("/")[0])) <= dt.date(int(birth.split("/")[2]),int(birth.split("/")[1]),int(birth.split("/")[0])):
+            if dt.date(int(death.split("/")[2] if len(death.split("/")[2])==4 else ''),int(death.split("/")[1] if len(death.split("/")[1])==2 else ''),int(death.split("/")[0] if len(death.split("/")[0])==2 else '')) <= dt.date(int(birth.split("/")[2] if len(birth.split("/")[2])==4 else ''),int(birth.split("/")[1] if len(birth.split("/")[1])==2 else ''),int(birth.split("/")[0] if len(birth.split("/")[0])==2 else '')):
                 update_status("Η ημερομηνία γέννησης πρέπει να είναι μικρότερη της ημερομηνίας θανάτου.")
                 return
         except:
-            update_status('Οι ημερομηνίες πρέπει να είναι της μορφης "d/m/y"!')
+            update_status('Οι ημερομηνίες πρέπει να είναι της μορφης "dd/mm/yyyy"!')
             return
     else:
         try:
-            dt.date(int(birth.split("/")[2]),int(birth.split("/")[1]),int(birth.split("/")[0]))
+            dt.date(int(birth.split("/")[2] if len(birth.split("/")[2])==4 else ''), int(birth.split("/")[1] if len(birth.split("/")[1])==2 else ''), int(birth.split("/")[0] if len(birth.split("/")[0])==2 else ''))
         except:
-            update_status('Η ημερομηνία γέννησης πρέπει να είναι της μορφής "d/m/y"!')
+            update_status('Η ημερομηνία γέννησης πρέπει να είναι της μορφής "dd/mm/yyyy"!')
             return
 
     # Έλεγχος 4: Αν δώθηκε φύλο
