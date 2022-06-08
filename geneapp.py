@@ -110,7 +110,11 @@ def create_interface():
         font=("Arial 12"), background="#ddd", foreground="#151515"
     )
     # Κουμπί Εκκαθάρισης
-    unload_btn = ttk.Button(app, text="Εκκαθάριση...", command=on_unload)
+    unload_btn = ttk.Button(app, text="Διαγραφή Δέντρου", command=on_unload)
+    unload_lbl=ttk.Label(app,
+        text="Διαγραφή του Γενεαλογικού Δέντρου. ",
+        font=("Arial 12"), background="#ddd", foreground="#151515"
+    )
     # Κουμπί Αποθήκευσης
     save_btn = ttk.Button(app, text="Αποθήκευση...", command=on_save)
     # Κουμπί Φόρτωσης
@@ -123,9 +127,10 @@ def create_interface():
     delete_lbl.grid(row=2, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
     view_btn.grid(row=3, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
     view_lbl.grid(row=3, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
-    unload_btn.grid(row=4, column=7, sticky=tk.W + tk.E, pady=4, padx=4)
-    save_btn.grid(row=4, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
-    load_btn.grid(row=4, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
+    unload_btn.grid(row=4, columnspan=4, sticky=tk.W + tk.E, pady=4, padx=4)
+    unload_lbl.grid(row=4, column=4, columnspan=6, sticky=tk.W + tk.E, pady=4, padx=4)
+    save_btn.grid(row=5, column=8, sticky=tk.W + tk.E, pady=4, padx=4)
+    load_btn.grid(row=5, column=9, sticky=tk.W + tk.E, pady=4, padx=4)
     # Τοποθέτηση του Application Frame στο Root παράθυρο
     app.grid(padx=14, pady=14)
     status.grid(sticky=tk.W + tk.E)
@@ -259,6 +264,11 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     # Έλεγχος 6: Διάφορες συγγενικές σχέσεις
     if not valid(int(f_ID), int(m_ID)): return
 
+    # Έλεγχος 7: Εάν δωθεί ημερομηνία μεταγενέστερη της σημερινής
+    if dt.date(int(birth.split("/")[2]),int(birth.split("/")[1]),int(birth.split("/")[0])) > dt.date( dt.datetime.now().year, dt.datetime.now().month, dt.datetime.now().day ):
+        update_status("Δώσατε μεταγενέστερη ημερομηνία από την σημερινή.")
+        return
+
     # Αντικατάσταση Χρήστη
     if replacing:
         data = pd.read_csv(StringIO(buffer), index_col=0)
@@ -381,7 +391,7 @@ def valid(id_1, id_2):
             if grandparent in gggparent2:
                 update_status("Οι γονείς του ατόμου δεν μπορούν να είναι δεύτερα ξαδέρφια!")
                 return False
-
+        
     # Όλες οι σχέσεις ΟΚ
     return True
 
