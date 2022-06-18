@@ -1,12 +1,13 @@
 import tkinter as tk
-from tkinter import Toplevel, ttk, filedialog
-from tkinter.messagebox import askyesno
+from tkinter import ttk
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import StringIO
 import networkx as nx
 from networkx.drawing.nx_pydot import graphviz_layout
 import datetime as dt
+import re
+from PIL import ImageTk, Image
 
 
 # Global Variables
@@ -20,12 +21,22 @@ T = nx.DiGraph() #δημιουργία κενού δικτύου
 buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
 
 
+def center_window():
+    """ Συνάρτηση που κεντράρει το παράθυρο της εφαρμογής. """
+    window_height = 729
+    window_width = 720
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    x_cordinate = int((screen_width/2) - (window_width/2))
+    y_cordinate = int((screen_height/2)-(window_height/2))
+    root.geometry("{}x{}+{}+{}".format(window_width,window_height,x_cordinate,y_cordinate))
+
+
 def on_save():
     """ Γράφει τα δεδομένα του buffer σε ένα υπάρχων ή νέο αρχείο που θα καθορίσει ο χρήστης. """
     update_status("Αποθήκευση...")
     # Δημιουργία διαδρομής και ονομασίας για αποθήκευση
-    save_dir = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=(("GeneApp CSV File", "*.csv"), ("All files", "*")))
-
+    save_dir = tk.filedialog.asksaveasfilename(defaultextension=".csv", filetypes=(("GeneApp CSV File", "*.csv"), ("All files", "*")))
     # Έλεγχος αν η διαδρομή είναι εντάξει για αποθήκευση
     try:
         with open(save_dir, "w", encoding="utf-8") as f:
@@ -40,7 +51,7 @@ def on_load():
     # Update Status Text
     update_status("Φόρτωση από...")
     # Get path of file to Load in a temporary variable
-    load_path = filedialog.askopenfilename(filetypes = (("GeneApp CSV", "*.csv"), ("All files", "*")))
+    load_path = tk.filedialog.askopenfilename(filetypes = (("GeneApp CSV", "*.csv"), ("All files", "*")))
     # Check if temporary path is okay and load it or not
     if load_path != "":
         update_status("Αρχείο φορτώθηκε! Έλεγχος δομής του αρχείου...")
@@ -73,10 +84,26 @@ def on_load():
 
 def create_interface():
     ''' Δημιουργεί το βασικό GUI της εφαρμογής. '''
+
+    image1 = Image.open("familytree.png")
+    test = ImageTk.PhotoImage(image1)
+    label1 = tk.Label(image=test)
+    label1.image = test
+    label1.place(x=0, y=0, relwidth=1, relheight=1)
+    def on_resize(event):
+        # resize the background image to the size of label
+        image = image1.resize((event.width, event.height), Image.ANTIALIAS)
+        # update the image of the label
+        label1.image = ImageTk.PhotoImage(image)
+        label1.config(image=label1.image)
+    label1.bind('<Configure>', on_resize)
+
     # Ιδιότητες Παραθύρου Root
     root.title("GeneApp - Εφαρμογή Γενεαλογικού Δέντρου")
     root.columnconfigure(0, weight=1)
     root.rowconfigure(0, weight=1)
+    center_window()
+
     # Δημιουργία ενός wrapper frame για το Application
     app = tk.Frame(root)
     # Τίτλος
@@ -134,6 +161,8 @@ def create_interface():
     # Τοποθέτηση του Application Frame στο Root παράθυρο
     app.grid(padx=14, pady=14)
     status.grid(sticky=tk.W + tk.E)
+    # Εισαγωγή window icon για την εφαρμογή.
+    root.iconbitmap('favicon.ico')
     # Εκκίνηση του interface
     root.mainloop()
 
@@ -141,6 +170,7 @@ def create_interface():
 def on_insert():
     ''' Συνάρτηση που τρέχει όταν πατηθεί το κουμπί "Προσθήκη". '''
     global subwindow
+
     # Δεν επιτρέπουμε την πολλαπλή δημιουργία υποπαραθύρων
     if subwindow == None or not tk.Toplevel.winfo_exists(subwindow):
         # Δημιουργία υποπαραθύρου και ορισμός των μεταβλητών του
@@ -148,6 +178,9 @@ def on_insert():
         subwindow.title("GeneApp - Genealogy Tree Application")
         subwindow.columnconfigure(0, weight=1)
         subwindow.rowconfigure(0, weight=1)
+        subwindow.geometry('330x330+750+300')
+        subwindow.iconbitmap('favicon.ico')
+
         # Δημιουργία frame wrapper εντός του υποπαραθύρου
         wrapper = ttk.Frame(subwindow)
         ## Δημιουργία της φόρμας
@@ -205,7 +238,7 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
             update_status("Το ID 0 είναι δεσμευμένο από το πρόγραμμα, δοκιμάστε άλλο ID!")
             return
         elif int(id) in get_IDs(buffer): # Το άτομο υπάρχει ήδη, επεξεργασία;
-            replacing = askyesno(title="Αντικατάσταση;", message="Το ID:"+ id +" αντιστοιχεί στον "+ buffer.split("\n")[int(id)].split(",")[1] +"! Μπορεί να γίνει αντικατάσταση των βασικών στοιχείων εκτός από τα ID του πατέρα - μητέρας και το φύλο. Αν θέλετε να αλλάξετε τα προηγούμενα στοιχεία, τότε πρέπει να δημιουργήσετε νέο άτομο και να διαγράψετε το υπάρχων. Να γίνει αντικατάσταση;")
+            replacing = tk.messagebox.askyesno(title="Αντικατάσταση;", message="Το ID:"+ id +" αντιστοιχεί στον "+ buffer.split("\n")[int(id)].split(",")[1] +"! Μπορεί να γίνει αντικατάσταση των βασικών στοιχείων εκτός από τα ID του πατέρα - μητέρας και το φύλο. Αν θέλετε να αλλάξετε τα προηγούμενα στοιχεία, τότε πρέπει να δημιουργήσετε νέο άτομο και να διαγράψετε το υπάρχων. Να γίνει αντικατάσταση;")
             update_status("Υπάρχει ήδη άτομο με αυτό το ID!")
             if not replacing:
                 return
@@ -217,19 +250,29 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     if name == "" or name.isascii() == False:
         update_status("Εισάγετε ονομασία του ατόμου με λατινικούς χαρακτήρες.")
         return
+    if (re.search(r'\d', name)):
+        update_status("Το όνομα δεν μπορεί να περιέχει νούμερα!")
+        return
 
     # Έλεγχος 3: Μετατροπή και έλεγχος birth και death σε date_format και σύγκριση αν death > birth
-    if death: # Αν υπάρχει ημερομηνία Θανάτου
+    if death: # Δώθηκε ημερομηνία Θανάτου
         try:
-            if dt.date(int(death.split("/")[2] if len(death.split("/")[2])==4 else ''),int(death.split("/")[1] if len(death.split("/")[1])==2 else ''),int(death.split("/")[0] if len(death.split("/")[0])==2 else '')) <= dt.date(int(birth.split("/")[2] if len(birth.split("/")[2])==4 else ''),int(birth.split("/")[1] if len(birth.split("/")[1])==2 else ''),int(birth.split("/")[0] if len(birth.split("/")[0])==2 else '')):
+            if dt.date(int(death.split("/")[2] if len(death.split("/")[2]) == 4 else ''),
+                       int(death.split("/")[1] if len(death.split("/")[1]) == 2 else ''),
+                       int(death.split("/")[0] if len(death.split("/")[0]) == 2 else '')) <= dt.date(
+                    int(birth.split("/")[2] if len(birth.split("/")[2]) == 4 else ''),
+                    int(birth.split("/")[1] if len(birth.split("/")[1]) == 2 else ''),
+                    int(birth.split("/")[0] if len(birth.split("/")[0]) == 2 else '')):
                 update_status("Η ημερομηνία γέννησης πρέπει να είναι μικρότερη της ημερομηνίας θανάτου.")
                 return
         except:
             update_status('Οι ημερομηνίες πρέπει να είναι της μορφης "dd/mm/yyyy"!')
             return
-    else:
+    else: # Δεν δώθηκε ημερομηνία Θανάτου
         try:
-            dt.date(int(birth.split("/")[2] if len(birth.split("/")[2])==4 else ''), int(birth.split("/")[1] if len(birth.split("/")[1])==2 else ''), int(birth.split("/")[0] if len(birth.split("/")[0])==2 else ''))
+            dt.date(int(birth.split("/")[2] if len(birth.split("/")[2]) == 4 else ''),
+                    int(birth.split("/")[1] if len(birth.split("/")[1]) == 2 else ''),
+                    int(birth.split("/")[0] if len(birth.split("/")[0]) == 2 else ''))
         except:
             update_status('Η ημερομηνία γέννησης πρέπει να είναι της μορφής "dd/mm/yyyy"!')
             return
@@ -269,6 +312,15 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
         update_status("Δώσατε μεταγενέστερη ημερομηνία από την σημερινή.")
         return
 
+    # Έλεγχος 8: Εάν ο χρήστης δώσει μόνο όνομα ή επίθετο.
+    try:
+        if (name.split(" ")[0] == "" or name.split(" ")[1] == ""):
+            update_status("Δεν έχετε εισάγει σωστά το ονοματεπώνυμο!")
+            return
+    except:
+        update_status("Δεν έχετε εισάγει σωστά το ονοματεπώνυμο!")
+        return
+
     # Αντικατάσταση Χρήστη
     if replacing:
         data = pd.read_csv(StringIO(buffer), index_col=0)
@@ -280,9 +332,9 @@ def on_submit(wrapper, network, id, name, birth, death, sex, f_ID, m_ID, desc):
     # Εισαγωγή Χρήστη
     else:
         buffer += id+","+name+","+birth+","+death+","+sex+","+f_ID+","+m_ID+","+desc+"\n"
-
     subwindow.destroy() # Καταστρέφουμε το υποπαράθυρο
     update_status("Προστέθηκε ένα άτομο!")
+    return on_view()
 
 
 def valid(id_1, id_2):
@@ -297,6 +349,7 @@ def valid(id_1, id_2):
         # Παππούδων
         gparent1 = [] # Λίστα με γονείς πρώτου ID
         gparent1_1 = buffer.split("\n")[int(parent1[5])].split(",")
+
         if gparent1_1[0].isnumeric(): gparent1.append(gparent1_1[0])
         gparent1_2 = buffer.split("\n")[int(parent1[6])].split(",")
         if gparent1_2[0].isnumeric(): gparent1.append(gparent1_2[0])
@@ -374,6 +427,18 @@ def valid(id_1, id_2):
             update_status("Δεν μπορεί γονέας να κάνει παιδί με το παιδί του!")
             return False
 
+        # Έλεγχος για το αν θειος ζευγαρώσει με ανηψιά.
+        for grandparent in ggparent1:
+            if grandparent in gggparent2:
+                update_status("Δεν μπορεί να ζευγαρώσει θείος με ανηψιά!")
+                return False
+
+        # Έλεγχος για το αν θεια ζευγαρώσει με ανηψιό.
+        for grandparent in ggparent2:
+            if grandparent in gggparent1:
+                update_status("Δεν μπορεί να ζευγαρώσει θεία με ανηψιό!")
+                return False
+
         # Έλεγχος αν τα IDs είναι αδέρφια
         for grandparent in gparent1:
             if grandparent in gparent2:
@@ -391,7 +456,7 @@ def valid(id_1, id_2):
             if grandparent in gggparent2:
                 update_status("Οι γονείς του ατόμου δεν μπορούν να είναι δεύτερα ξαδέρφια!")
                 return False
-        
+
     # Όλες οι σχέσεις ΟΚ
     return True
 
@@ -411,6 +476,8 @@ def on_delete():
         subwindow.title("GeneApp - Genealogy Tree Application")
         subwindow.columnconfigure(0, weight=1)
         subwindow.rowconfigure(0, weight=1)
+        subwindow.geometry("240x100+750+500")
+        subwindow.iconbitmap('favicon.ico')
         # Δημιουργία ενός frame wrapper μέσα στο υποπαράθυρο
         wrapper = ttk.Frame(subwindow)
         ttk.Label(wrapper, text="ID", font=("Arial 12"), foreground="#151515", background="#ddd").grid(row=0,column=0, columnspan=4, sticky=tk.W + tk.E)
@@ -429,7 +496,7 @@ def on_delete_confirm(ID):
     try: # Έλεγχος ότι ID είναι θετικός ακέραιος, διάφορος του 0 και υπάρχει στη λίστα με τα διαθέσιμα IDs.
         if int(ID) > 0 and int(ID) in get_IDs(buffer):
             update_status("Το άτομο, που αντιστοιχεί στο ID προς διαγραφή, βρέθηκε.")
-            sure = askyesno(title="Είστε σίγουρος για τη διαγραφή;", message="ΠΡΟΣΟΧΗ: Η διαγραφή του "+ buffer.split("\n")[int(ID)].split(",")[1] +" με ID:"+ ID +" θα διαγράψει και όλα τα άτομα-απογόνους που σχετίζονται με αυτόν. Θέλετε να συνεχίσετε;")
+            sure = tk.messagebox.askyesno(title="Είστε σίγουρος για τη διαγραφή;", message="ΠΡΟΣΟΧΗ: Η διαγραφή του "+ buffer.split("\n")[int(ID)].split(",")[1] +" με ID:"+ ID +" θα διαγράψει και όλα τα άτομα-απογόνους που σχετίζονται με αυτόν. Θέλετε να συνεχίσετε;")
             if not sure: return
         else:
             update_status("Το ID προς διαγραφή δεν υπάρχει.")
@@ -451,6 +518,7 @@ def on_delete_confirm(ID):
                 buffer = buffer.replace(record+"\n", "")
     update_status("Το άτομο διαγράφθηκε επιτυχώς!")
     subwindow.destroy()
+    return on_view()
 
 
 def get_ID():
@@ -476,77 +544,78 @@ def get_IDs(buffer):
 
 def on_unload():
     global buffer
-    # Reset the buffer 
+    # Reset the buffer
     buffer = "ID,Name,Birth,Death,Sex,Father,Mother,Description\n"
-    update_status("Επιτυχής εκκάθαριση δεδομένων.") 
+    update_status("Επιτυχής εκκάθαριση δεδομένων.")
 
 
 def on_view():
     ''' Συνάρτηση που τρέχει όταν ο χρήστης πατήσει το κουμπί της προβολής δέντρου. '''
     # Δεν επιτρέπουμε την δημιουργία πολλαπλών γράφων
-    if not plt.get_fignums():
-        global T
-        T.clear() # Καθαρίζουμε τον γράφο για να τον ξανασχεδιάσουμε
+    plt.close() # Κλείνουμε τον γράφο
+    global T
+    T.clear() # Καθαρίζουμε τον γράφο για να τον ξανασχεδιάσουμε
 
-        data = pd.read_csv(StringIO(buffer))
-        data["Death"]=data["Death"].astype(str)
+    data = pd.read_csv(StringIO(buffer))
+    data["Death"]=data["Death"].astype(str)
 
-        # Καθάρισμα όλων των λεξικών
-        livingMales.clear()
-        deadMales.clear()
-        livingFemales.clear()
-        deadFemales.clear()
+    # Καθάρισμα όλων των λεξικών
+    livingMales.clear()
+    deadMales.clear()
+    livingFemales.clear()
+    deadFemales.clear()
 
-        # Ενημέρωση Χρήστη
-        update_status("Προβολή γράφου...")
+    # Ενημέρωση Χρήστη
+    update_status("Προβολή γράφου...")
 
-        # Προσθήκη Κορυφών και δημιουργία λιστών
-        for person in data.index:
-            newNode = [str(data.loc[person, "ID"]), data.loc[person, "Name"]]
-            if data.loc[person, "Sex"] == 1:
-                if data.loc[person, "Death"]=="nan":
-                    livingMales.update({newNode[0]:newNode[1]})
-                else:
-                    deadMales.update({newNode[0]:newNode[1]})
+    # Προσθήκη Κορυφών και δημιουργία λιστών
+    for person in data.index:
+        newNode = [str(data.loc[person, "ID"]), data.loc[person, "Name"]]
+        if data.loc[person, "Sex"] == 1:
+            if data.loc[person, "Death"]=="nan":
+                livingMales.update({newNode[0]:newNode[1]})
             else:
-                if data.loc[person, "Death"]=="nan":
-                    livingFemales.update({newNode[0]:newNode[1]})
-                else:
-                    deadFemales.update({newNode[0]:newNode[1]})
-            T.add_node(newNode[1])
+                deadMales.update({newNode[0]:newNode[1]})
+        else:
+            if data.loc[person, "Death"]=="nan":
+                livingFemales.update({newNode[0]:newNode[1]})
+            else:
+                deadFemales.update({newNode[0]:newNode[1]})
+        T.add_node(newNode[1])
 
-        # Προσθήκη Ακμών
-        for person in data.index:
-            if data.loc[person, "Father"] != 0:
-                personsFatherNumber = data.loc[person, "Father"]
-                personsFather = data.loc[data['ID'] == personsFatherNumber,"Name"].values[0]
-                v = personsFather
-                u = data.loc[person, "Name"]
-                T.add_edge(v, u)
-            if data.loc[person, "Mother"] != 0:
-                personsMotherNumber = data.loc[person, "Mother"]
-                personsMother = data.loc[data['ID'] == personsMotherNumber,"Name"].values[0]
-                v = personsMother
-                u = data.loc[person, "Name"]
-                T.add_edge(v, u)
+    # Προσθήκη Ακμών
+    for person in data.index:
+        if data.loc[person, "Father"] != 0:
+            personsFatherNumber = data.loc[person, "Father"]
+            personsFather = data.loc[data['ID'] == personsFatherNumber,"Name"].values[0]
+            v = personsFather
+            u = data.loc[person, "Name"]
+            T.add_edge(v, u)
+        if data.loc[person, "Mother"] != 0:
+            personsMotherNumber = data.loc[person, "Mother"]
+            personsMother = data.loc[data['ID'] == personsMotherNumber,"Name"].values[0]
+            v = personsMother
+            u = data.loc[person, "Name"]
+            T.add_edge(v, u)
 
-        # Σχεδίαση Γράφου
-        pos = graphviz_layout(T, prog="dot")
+    # Σχεδίαση Γράφου
+    figure = plt.figure('GeneApp')
+    figure.suptitle('Το Γενεαλογικό μου Δέντρο', fontsize=11,fontweight='bold')
+    pos = graphviz_layout(T, prog="dot")
 
-        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingMales.values()], node_size=120, node_color="#2196f3", alpha = 1.0, margins=0.1)
-        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadMales.values()], node_size=120, node_color="#2196f3", alpha = 0.35, margins=0.1)
-        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingFemales.values()], node_size=120, node_color="#f06292", alpha = 1.0, margins=0.1)
-        nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadFemales.values()], node_size=120, node_color="#f06292", alpha = 0.35, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingMales.values()], node_size=120, node_color="#2196f3", alpha = 1.0, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadMales.values()], node_size=120, node_color="#2196f3", alpha = 0.35, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in livingFemales.values()], node_size=120, node_color="#f06292", alpha = 1.0, margins=0.1)
+    nx.draw_networkx_nodes(T, pos, nodelist=[value for value in deadFemales.values()], node_size=120, node_color="#f06292", alpha = 0.35, margins=0.1)
 
-        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingMales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
-        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadMales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
-        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingFemales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
-        nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadFemales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingMales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadMales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in livingFemales.items()}, alpha = 1.0, verticalalignment="top", font_size=10)
+    nx.draw_networkx_labels(T, pos, labels = {value: key+") "+value for key,value in deadFemales.items()}, alpha = 0.35, verticalalignment="top", font_size=10)
 
-        nx.draw_networkx_edges(T, pos)
-        plt.show()
-
-        update_status("")
+    nx.draw_networkx_edges(T, pos)
+    plt.show()
+    update_status("")
 
 
 create_interface()
