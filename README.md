@@ -4,7 +4,7 @@ Python Project Γενεαλογικού Δέντρου για το μάθημα 
 ## To Do List
 - [x] GUI Structure
 - [x] GUI Linking
-- [ ] Standalone Functions
+- [x] Standalone Functions
 
 ### GUI Structure (T-Kinter)
 ```
@@ -17,7 +17,8 @@ Main Container
     -- Form: ID
       -- (Αν ID Υπάρχει) "Διαγραφή του ατόμου και όλων των συνδέσεων του προς τα κάτω."
       -- (ID δεν υπάρχει) "Δεν βρέθηκε το άτομο."
-  -- Προβολή Γράφου
+  -- Button: "Προβολή Γράφου"
+  -- Button: "Καθάρισμα Γράφου"
   -- Αποθήκευση
     -- Ανοίγει Explorer για επιλογή path, ελέγχει buffer και αποθηκεύει σε csv.
   -- Φόρτωση
